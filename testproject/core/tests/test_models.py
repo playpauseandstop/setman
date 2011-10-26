@@ -20,6 +20,26 @@ TEST_SETTINGS = {
 
 class TestSettingsModel(TestCase):
 
+    def test_cache(self):
+        Settings.objects.create(data=TEST_SETTINGS)
+
+        with self.assertNumQueries(1):
+            settings = Settings.objects.get()
+
+            for key, value in TEST_SETTINGS.items():
+                self.assertEqual(getattr(settings, key), value)
+
+            settings = Settings.objects.get()
+
+            for key, value in TEST_SETTINGS.items():
+                self.assertEqual(getattr(settings, key), value)
+
+        settings.BOOLEAN_SETTING = True
+        settings.save()
+
+        settings = Settings.objects.get()
+        self.assertTrue(settings.BOOLEAN_SETTING)
+
     def test_save(self):
         settings = Settings()
 

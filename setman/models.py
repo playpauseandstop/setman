@@ -1,7 +1,11 @@
+from django.core.cache import cache
 from django.db import models
+from django.db.models import signals
+from django.dispatch import receiver
 from django.utils.translation import ugettext_lazy as _
 
 from setman.fields import SettingsField
+from setman.managers import CACHE_KEY, SettingsManager
 
 
 __all__ = ('Settings', )
@@ -12,6 +16,8 @@ class Settings(models.Model):
     Store all custom project settings in ``data`` field as ``json`` dump.
     """
     data = SettingsField(_('data'), blank=True, default='', editable=False)
+
+    objects = SettingsManager()
 
     class Meta:
         verbose_name = _('settings')
@@ -54,3 +60,15 @@ class Settings(models.Model):
                              counter)
 
         super(Settings, self).save(*args, **kwargs)
+
+
+@receiver(signals.post_save, sender=Settings)
+def clear_settings_cache(instance, **kwargs):
+    """
+    Clear settings cache and.
+    """
+    from setman import settings
+    settings._clear()
+
+    if CACHE_KEY in cache:
+        cache.delete(CACHE_KEY)
