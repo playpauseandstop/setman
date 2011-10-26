@@ -24,13 +24,13 @@ class TestSettings(TestCase):
         settings = Settings()
 
         for key, value in TEST_SETTINGS.items():
-            setattr(settings.data, key, value)
+            setattr(settings, key, value)
 
         settings.save()
         settings = Settings.objects.get()
 
         for key, value in TEST_SETTINGS.items():
-            self.assertEqual(getattr(settings.data, key), value)
+            self.assertEqual(getattr(settings, key), value)
 
     def test_unique(self):
         Settings.objects.create()
