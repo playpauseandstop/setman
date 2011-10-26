@@ -50,5 +50,12 @@ class TestGlobalSettings(TestCase):
         settings.BOOLEAN_SETTING = True
         settings.save()
 
+        self.assertTrue(settings.BOOLEAN_SETTING)
+
         instance = Settings.objects.get()
         self.assertTrue(instance.BOOLEAN_SETTING)
+
+        instance.BOOLEAN_SETTING = False
+        instance.save()
+
+        self.assertFalse(instance.BOOLEAN_SETTING)
