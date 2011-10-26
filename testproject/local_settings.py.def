@@ -1,0 +1,27 @@
+# ==============
+# Debug settings
+# ==============
+DEBUG = True
+TEMPLATE_DEBUG = DEBUG
+SERVE_STATIC_FILES = True
+
+# ========================================================
+# Locally installed apps, logging settings and middlewares
+# ========================================================
+LOCAL_INSTALLED_APPS = ()
+LOCAL_LOGGING = {}
+LOCAL_MIDDLEWARE_CLASSES = ()
+
+# =============================================================
+# IMPORTANT! Make this unique, and don't share it with anybody.
+# =============================================================
+SECRET_KEY = ''
+
+# ==============
+# oDesk settings
+# ==============
+#
+# Replace these with your keys.
+#
+ODESK_PUBLIC_KEY = ''
+ODESK_PRIVATE_KEY = ''
