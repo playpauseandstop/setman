@@ -1,4 +1,8 @@
 *.pyc
 *.pyo
 
+.doit.db.db
 sqlite3.db
+
+testproject/local_settings.py
+testproject/ve/*
