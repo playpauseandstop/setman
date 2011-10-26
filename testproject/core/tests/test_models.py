@@ -5,7 +5,7 @@ from django.test import TestCase
 from setman.models import Settings
 
 
-__all__ = ('TestSettings', )
+__all__ = ('TestSettingsModel', )
 
 
 TEST_SETTINGS = {
@@ -18,7 +18,7 @@ TEST_SETTINGS = {
 }
 
 
-class TestSettings(TestCase):
+class TestSettingsModel(TestCase):
 
     def test_save(self):
         settings = Settings()
