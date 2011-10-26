@@ -8,7 +8,7 @@ from django.conf import settings as django_settings
 from django.utils import importlib
 
 
-__all__ = ('parse_config', )
+__all__ = ('AVAILABLE_SETTINGS', 'parse_config')
 
 
 DEFAULT_SETTINGS_FILENAME = 'settings.cfg'
@@ -51,9 +51,13 @@ class BooleanSetting(Setting):
         self.default = self.to_python(self.default)
 
     def to_python(self, value):
+        if isinstance(value, (bool, int)):
+            return bool(value)
+
         boolean_states = ConfigParser._boolean_states
         if not value.lower() in boolean_states:
             return None
+
         return boolean_states[value.lower()]
 
 
@@ -230,3 +234,6 @@ def parse_config(path=None):
         settings.append(setting)
 
     return settings
+
+
+AVAILABLE_SETTINGS = parse_config()
