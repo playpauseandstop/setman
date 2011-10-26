@@ -16,7 +16,10 @@ logger = logging.getLogger('setman')
 
 
 class Setting(object):
-
+    """
+    Base class for setting values that can provided in configuration definition
+    file.
+    """
     default = None
     help_text = None
     label = None
@@ -31,19 +34,29 @@ class Setting(object):
         self.__dict__.update(kwargs)
 
     def to_field(self):
+        """
+        Convert current setting instance to form field.
+        """
         raise NotImplementedError
 
     def to_python(self, value):
+        """
+        Convert setting value to necessary Python type.
+        """
         raise NotImplementedError
 
 
 class SettingTypeDoesNotExist(Exception):
-
-    pass
+    """
+    Simple exception that raised when user tried to load not supported setting
+    type from configuration definition file.
+    """
 
 
 class BooleanSetting(Setting):
-
+    """
+    Boolean setting.
+    """
     type = 'boolean'
 
     def __init__(self, **kwargs):
@@ -51,6 +64,9 @@ class BooleanSetting(Setting):
         self.default = self.to_python(self.default)
 
     def to_python(self, value):
+        """
+        Convert string to the boolean type.
+        """
         if isinstance(value, (bool, int)):
             return bool(value)
 
