@@ -73,6 +73,7 @@ BASE_INSTALLED_APPS = (
     # 3rd party apps
     'django_extensions',
     'django_jenkins',
+    'south',
 ) + PROJECT_APPS
 LOCAL_INSTALLED_APPS = ()
 

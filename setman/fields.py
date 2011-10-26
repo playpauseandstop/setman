@@ -81,3 +81,18 @@ class SettingsField(models.TextField):
                 data[key] = setting.to_python(value)
 
         return data
+
+
+# Add suport of SettingsField for South
+def add_south_introspector_rules():
+    from south.modelsinspector import add_introspection_rules
+
+    rules = [((SettingsField, ), [], {})]
+    add_introspection_rules(rules, ['^setman\.fields'])
+
+try:
+    import south
+except ImportError:
+    pass
+else:
+    add_south_introspector_rules()
