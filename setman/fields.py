@@ -4,14 +4,19 @@ from django.db import models
 from django.utils import simplejson
 
 from setman import forms
+from setman.utils import AVAILABLE_SETTINGS
 
 
-__all__ = ('JSONField', )
+__all__ = ('SettingsField', )
 
 
-class JSONField(models.TextField):
+class SettingsField(models.TextField):
     """
     Model field that stores Python dict as JSON dump.
+
+    Also on converting value from dump to Python field uses
+    ``AVAILABLE_SETTINGS`` container to coerce stored values to real Python
+    objects.
 
     You should set custom encoder class for dumps Python object to JSON data
     via ``encoder_cls`` keyword argument. By default, ``DjangoJSONEncoder``
@@ -21,10 +26,10 @@ class JSONField(models.TextField):
 
     def __init__(self, *args, **kwargs):
         self.encoder_cls = kwargs.pop('encoder_cls', DjangoJSONEncoder)
-        super(JSONField, self).__init__(*args, **kwargs)
+        super(SettingsField, self).__init__(*args, **kwargs)
 
     def contribute_to_class(self, cls, name):
-        super(JSONField, self).contribute_to_class(cls, name)
+        super(SettingsField, self).contribute_to_class(cls, name)
 
         def get_json(model):
             return self.get_db_prep_value(getattr(model, self.attname))
@@ -35,9 +40,9 @@ class JSONField(models.TextField):
         setattr(cls, 'set_%s_json' % self.name, set_json)
 
     def formfield(self, **kwargs):
-        defaults = {'form_class': forms.JSONField}
+        defaults = {'form_class': forms.SettingsField}
         defaults.update(kwargs)
-        field = super(JSONField, self).formfield(**defaults)
+        field = super(SettingsField, self).formfield(**defaults)
 
         if hasattr(field.widget, 'json_options') and \
            not 'cls' in field.widget.json_options:
@@ -50,7 +55,7 @@ class JSONField(models.TextField):
             if callable(self.default):
                 return self.default()
             return self.default
-        return super(JSONField, self).get_default()
+        return super(SettingsField, self).get_default()
 
     def get_prep_value(self, value):
         return simplejson.dumps(value, cls=self.encoder_cls)
@@ -63,9 +68,16 @@ class JSONField(models.TextField):
             return value
 
         try:
-            return simplejson.loads(value,
+            data = simplejson.loads(value,
                                     encoding=django_settings.DEFAULT_CHARSET)
         except ValueError, e:
             # If string could not parse as JSON it's means that it's Python
-            # string saved to JSONField.
+            # string saved to SettingsField.
             return value
+
+        for key, value in data.items():
+            if hasattr(AVAILABLE_SETTINGS, key):
+                setting = getattr(AVAILABLE_SETTINGS, key)
+                data[key] = setting.to_python(value)
+
+        return data
