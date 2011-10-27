@@ -187,6 +187,14 @@ ODESK_AUTH_ADMIN_TEAMS = ()
 ODESK_AUTH_SUPERUSER_TEAMS = ()
 ODESK_AUTH_USERS = ()
 
+# ====================
+# setman configuration
+# ====================
+#
+# Permit access for edit settings to any user
+#
+SETMAN_AUTH_PERMITTED = lambda u: u
+
 # ===================
 # South configuration
 # ===================

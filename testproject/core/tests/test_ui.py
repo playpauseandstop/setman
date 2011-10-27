@@ -1,97 +1,117 @@
 from decimal import Decimal
 
+from django.conf import settings as django_settings
+from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
-from django.test import TestCase, Client, Approximate
-
+from django.test import TestCase as DjangoTestCase
 
 from setman import settings
-from setman.models import Settings
 from setman.utils import AVAILABLE_SETTINGS
 
-__all__ = ('TestUISettingsForm', )
+from testproject.core.tests.test_models import TEST_SETTINGS
 
 
-class TestUISettingsForm(TestCase):
+__all__ = ('TestUI', )
 
-    def tearDown(self):
-        settings._clear()
+
+NEW_SETTINGS = {
+    'BOOLEAN_SETTING': True,
+    'CHOICE_SETTING': 'waterlemon',
+    'DECIMAL_SETTING': Decimal('5.33'),
+    'INT_SETTING': 20,
+    'FLOAT_SETTING': 189.2,
+    'STRING_SETTING': 'setting',
+    'VALIDATOR_SETTING': 'abc xyz',
+}
+TEST_USERNAME = 'username'
+WRONG_SETTINGS = {
+    'CHOICE_SETTING': ('pepper', ),
+    'DECIMAL_SETTING': (Decimal(-1), Decimal(12), Decimal('8.3451')),
+    'INT_SETTING': (12, 48),
+    'FLOAT_SETTING': ('', ),
+    'STRING_SETTING': ('Not started from s', ),
+    'VALIDATOR_SETTING': ('abc', 'xyz', 'Something'),
+}
+
+
+class TestCase(DjangoTestCase):
 
     def setUp(self):
-        self.edit_settings_url = reverse('edit-settings')
+        self.old_AUTHENTICATION_BACKENDS = \
+            django_settings.AUTHENTICATION_BACKENDS
+        django_settings.AUTHENTICATION_BACKENDS = (
+            'django.contrib.auth.backends.ModelBackend',
+        )
 
-    def test_edit_settings_form_default_value(self):
-        c = Client()
-        response = c.get(self.edit_settings_url)
-        self.assertContains(response, 'Started with s')
+        self.edit_settings_url = reverse('setman_edit')
+        self.home_url = reverse('home')
+        self.view_settings_url = reverse('view_settings')
 
-    def test_edit_settings_form_value_from_db(self):
-        settings.STRING_SETTING = 'Changed string'
-        settings.save()
-        c = Client()
-        response = c.get(self.edit_settings_url)
-        self.assertContains(response, 'Changed string')
+    def tearDown(self):
+        django_settings.AUTHENTICATION_BACKENDS = \
+            self.old_AUTHENTICATION_BACKENDS
+        settings._clear()
 
-    def test_edit_settings_form(self):
-        c = Client()
-        response = c.get(self.edit_settings_url)
-        self.assertContains(response, 'type="checkbox"')
-        self.assertContains(response,
-            '<select name="CHOICE_SETTING" id="id_CHOICE_SETTING">')
+    def login(self, username):
+        try:
+            user = User.objects.get(username=username)
+        except User.DoesNotExist:
+            user = User.objects.create_user(username=username,
+                                            password=username,
+                                            email=username + '@domain.com')
+        else:
+            user.set_password(username)
+            user.save()
 
-        for choice in AVAILABLE_SETTINGS.CHOICE_SETTING.choices:
-            if choice != AVAILABLE_SETTINGS.CHOICE_SETTING.default:
-                self.assertContains(response,
-                '<option value="%s">%s</option>' % (choice, choice))
-            else:
-                self.assertContains(response,
-                '<option value="%s" selected="selected">%s</option>'
-                % (choice, choice))
+        client = self.client
+        client.login(username=username, password=username)
 
-    def test_edit_settings_form_save(self):
-        c = Client()
-        response = c.post(self.edit_settings_url,
-            {'STRING_SETTING': ['new_string'],
-             'INT_SETTING': ['25'],
-             'DECIMAL_SETTING': ['5.8'],
-             'CHOICE_SETTING': ['apple'],
-             'FLOAT_SETTING': ['79.4']})
-        self.assertEqual(getattr(settings, 'STRING_SETTING'), 'new_string')
-        self.assertEqual(getattr(settings, 'INT_SETTING'), 25)
-        self.assertEqual(getattr(settings, 'BOOLEAN_SETTING'), False)
-        self.assertEqual(getattr(settings, 'DECIMAL_SETTING'), Decimal('5.8'))
-        self.assertEqual(getattr(settings, 'CHOICE_SETTING'), 'apple')
-        self.assertEqual(getattr(settings, 'FLOAT_SETTING'), Approximate(79.4))
+        return client
 
-    def test_edit_settings_limits(self):
-        c = Client()
-        response = c.post(self.edit_settings_url,
-            {'STRING_SETTING': ['new_string'],
-             'INT_SETTING': ['36'],
-             'DECIMAL_SETTING': ['15.8'],
-             'CHOICE_SETTING': ['apple'],
-             'FLOAT_SETTING': ['79.4']})
 
-        # Max Value
-        self.assertContains(response,
-            'Ensure this value is less than or equal to 32.')
-        self.assertContains(response,
-            'Ensure this value is less than or equal to 10.')
+class TestUI(TestCase):
 
-        response = c.post(self.edit_settings_url,
-            {'STRING_SETTING': ['new_string'],
-             'INT_SETTING': ['1'],
-             'DECIMAL_SETTING': ['-1.8'],
-             'CHOICE_SETTING': ['apple'],
-             'FLOAT_SETTING': ['79.4']})
+    def test_edit_settings(self):
+        client = self.login(TEST_USERNAME)
+        response = client.get(self.edit_settings_url)
 
-        # Min Value
-        self.assertContains(response,
-            'Ensure this value is greater than or equal to 16.')
-        self.assertContains(response,
-            'Ensure this value is greater than or equal to 0.')
+        self.assertContains(response, 'Edit Settings', count=2)
 
-    def test_homepage(self):
-        c = Client()
-        response = c.get(reverse('homepage'))
-        self.assertContains(response, 'Edit Settings')
-        self.assertContains(response, self.edit_settings_url)
+        for setting in AVAILABLE_SETTINGS:
+            self.assertContains(response, setting.label)
+            self.assertContains(response, setting.help_text)
+
+        response = client.post(self.edit_settings_url, NEW_SETTINGS)
+        self.assertEqual(response.status_code, 302)
+        self.assertIn(self.edit_settings_url, response['Location'])
+
+        settings._clear()
+
+        for key, value in NEW_SETTINGS.items():
+            self.assertEqual(getattr(settings, key), value)
+
+    def test_edit_settings_errors(self):
+        client = self.login(TEST_USERNAME)
+
+    def test_home(self):
+        client = self.login(TEST_USERNAME)
+        response = client.get(self.home_url)
+
+        self.assertContains(
+            response,
+            '<li><a href="%s">Edit test project settings</a></li>' % \
+            self.edit_settings_url
+        )
+        self.assertContains(
+            response,
+            '<li><a href="%s">View configuration definition file</a></li>' % \
+            self.view_settings_url
+        )
+
+    def test_home_not_authenticated(self):
+        response = self.client.get(self.home_url, follow=True)
+        self.assertContains(
+            response,
+            'Log in with oDesk account <a href="%s?next=/">here</a>.' % \
+            reverse('django_odesk.auth.views.authenticate')
+        )
