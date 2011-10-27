@@ -6,3 +6,4 @@ if not 'django_nose' in settings.INSTALLED_APPS or \
     from test_models import *
     from test_settings import *
     from test_utils import *
+    from test_version import *
