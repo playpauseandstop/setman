@@ -18,7 +18,10 @@ class TestUtils(TestCase):
 
     def test_parse_config_default_path(self):
         settings = parse_config()
+
         self.assertEqual(len(settings), 7)
+        self.assertEqual(settings.path,
+                         os.path.join(django_settings.DIRNAME, 'settings.cfg'))
 
         setting = settings.BOOLEAN_SETTING
         self.assertEqual(setting.default, False)

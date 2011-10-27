@@ -21,6 +21,7 @@ urlpatterns = patterns('',
     (r'^admin/', include(admin.site.urls)),
 
     (r'^setman/', include('setman.urls')),
+    (r'^test/', include('testproject.core.urls')),
 )
 
 if settings.SERVE_STATIC_FILES:
