@@ -72,7 +72,6 @@ class Setting(object):
             kwargs.update({arg: getattr(self, arg)})
 
         kwargs.update(**self.field_kwargs)
-        logger.warning('%s, %s', self.name, kwargs)
         return self.field_klass(**kwargs)
 
     def to_python(self, value):
