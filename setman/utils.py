@@ -5,6 +5,8 @@ from ConfigParser import ConfigParser, Error as ConfigParserError
 from decimal import Decimal, ROUND_UP
 
 from django.conf import settings as django_settings
+from django.forms import BooleanField, CharField, ChoiceField,\
+    DecimalField, IntegerField, FloatField
 from django.utils import importlib
 
 
@@ -45,6 +47,18 @@ class Setting(object):
         """
         raise NotImplementedError
 
+    def get_initial(self):
+        """
+        Get initial value for field.
+        It can be default value from CDF or changed value
+        from db.
+        """
+        from setman import settings
+        try:
+            return getattr(settings, self.name)
+        except AttributeError:
+            return self.default
+
 
 class SettingTypeDoesNotExist(Exception):
     """
@@ -62,6 +76,10 @@ class BooleanSetting(Setting):
     def __init__(self, **kwargs):
         super(BooleanSetting, self).__init__(**kwargs)
         self.default = self.to_python(self.default)
+
+    def to_field(self):
+        return BooleanField(initial=self.get_initial(), label=self.label,
+            help_text=self.help_text, required=False)
 
     def to_python(self, value):
         """
@@ -85,6 +103,11 @@ class ChoiceSetting(Setting):
     def __init__(self, **kwargs):
         super(ChoiceSetting, self).__init__(**kwargs)
         self.choices = self.build_choices(self.choices)
+
+    def to_field(self):
+        choices = [(choice, choice) for choice in self.choices]
+        return ChoiceField(initial=self.get_initial(), label=self.label,
+            help_text=self.help_text, choices=choices)
 
     def build_choices(self, value):
         return tuple(map(lambda s: s.strip(), value.split(',')))
@@ -112,6 +135,12 @@ class DecimalSetting(Setting):
         self.max_value = self.to_python(self.max_value)
         self.min_value = self.to_python(self.min_value)
 
+    def to_field(self):
+        return DecimalField(initial=self.get_initial(), label=self.label,
+            help_text=self.help_text, min_value=self.min_value,
+            max_value=self.max_value, max_digits=self.max_digits,
+            decimal_places=self.decimal_places)
+
     def to_python(self, value):
         if value is None:
             return value
@@ -130,6 +159,11 @@ class IntSetting(Setting):
         self.max_value = self.to_python(self.max_value)
         self.min_value = self.to_python(self.min_value)
 
+    def to_field(self):
+        return IntegerField(initial=self.get_initial(), label=self.label,
+        help_text=self.help_text, min_value=self.min_value,
+        max_value=self.max_value)
+
     def to_python(self, value):
         try:
             return int(value)
@@ -141,6 +175,10 @@ class FloatSetting(IntSetting):
 
     type = 'float'
 
+    def to_field(self):
+        return FloatField(initial=self.get_initial(), label=self.label,
+        help_text=self.help_text)
+
     def to_python(self, value):
         try:
             return float(value)
@@ -150,10 +188,12 @@ class FloatSetting(IntSetting):
 
 class StringSetting(Setting):
 
-    max_length = None
-    min_length = None
     regex = None
     type = 'string'
+
+    def to_field(self):
+        return CharField(initial=self.get_initial(), label=self.label,
+        help_text=self.help_text)
 
     def to_python(self, value):
         return value
@@ -163,6 +203,10 @@ class SettingsContainer(object):
 
     def __init__(self):
         self._data = []
+
+    def __iter__(self):
+        for field in self._data:
+            yield field
 
     def __len__(self):
         return len(self._data)
