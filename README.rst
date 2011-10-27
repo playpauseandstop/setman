@@ -18,7 +18,7 @@ or using sudo.*
 
 To install use::
 
-    $ pip install kikola
+    $ pip install django-setman
 
 Or::
 
@@ -34,7 +34,7 @@ and place ``setman`` directory somewhere to ``PYTHONPATH`` (or ``sys.path``).
 License
 =======
 
-``setman`` is licensed under the `BSD License
+``django-setman`` is licensed under the `BSD License
 <https://github.com/odeskps/sprint-configuration/blob/master/LICENSE>`_.
 
 Usage
