@@ -1,0 +1,63 @@
+* {
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    color: #2b2e2e;
+    font-family: "PT Sans", "Helvetica", sans-serif;
+    font-size: 12pt;
+}
+
+a {
+    color: #641929;
+    text-decoration: underline;
+}
+
+a:visited {
+    color: #8c2439;
+}
+
+a:focus, a:hover {
+    color: #2b2e2e;
+}
+
+article, footer, header {
+    display: block;
+}
+
+header {
+    background-color: #313f54;
+    color: #cae6e8;
+    padding: 10pt 40pt;
+    text-shadow: 1px 1px 1px #2b2e2e;
+}
+
+article {
+    margin: 20pt 40pt;
+}
+
+article p {
+    margin: 1em 0;
+}
+
+article ul {
+    margin: 1em 0 1em 2em;
+}
+
+footer {
+    color: #999;
+    font-size: 0.9em;
+    padding: 0 40pt;
+}
+
+ul.links {
+    font-size: 1.2em;
+}
+
+.github-ribbon img {
+    border: 0;
+    position: absolute;
+    right: 0;
+    top: 0;
+}
