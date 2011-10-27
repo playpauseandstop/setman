@@ -7,6 +7,9 @@ from django.test import TestCase
 
 from setman.utils import parse_config
 
+from testproject.core.validators import abc_validator, test_runner_validator, \
+    xyz_validator
+
 
 __all__ = ('TestUtils', )
 
@@ -15,7 +18,7 @@ class TestUtils(TestCase):
 
     def test_parse_config_default_path(self):
         settings = parse_config()
-        self.assertEqual(len(settings), 6)
+        self.assertEqual(len(settings), 7)
 
         setting = settings.BOOLEAN_SETTING
         self.assertEqual(setting.default, False)
@@ -73,3 +76,17 @@ class TestUtils(TestCase):
             settings.TEST_RUNNER.default, 'django.test.simple.TestRunner'
         )
         self.assertEqual(settings.TEST_RUNNER.type, 'string')
+        self.assertEqual(
+            settings.TEST_RUNNER.validators, [test_runner_validator]
+        )
+
+    def test_parse_config_validators(self):
+        settings = parse_config()
+
+        setting = settings.BOOLEAN_SETTING
+        self.assertEqual(setting.validators, [])
+
+        setting = settings.VALIDATOR_SETTING
+        self.assertIn(abc_validator, setting.validators)
+        self.assertIn(xyz_validator, setting.validators)
+        self.assertEqual(setting.validators, [abc_validator, xyz_validator])
