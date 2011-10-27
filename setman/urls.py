@@ -1,6 +1,6 @@
 from django.conf.urls.defaults import patterns, url
 
-urlpatterns = patterns('',
-        url(r'^edit_settings', 'setman.views.edit_settings',
-            name='edit-settings'),
+
+urlpatterns = patterns('setman.views',
+    url(r'^$', 'edit', name='setman_edit'),
 )

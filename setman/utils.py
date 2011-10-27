@@ -126,6 +126,7 @@ class BooleanSetting(Setting):
     Boolean setting.
     """
     field_klass = forms.BooleanField
+    field_kwargs = {'required': False}
     type = 'boolean'
 
     def __init__(self, **kwargs):
@@ -253,8 +254,9 @@ class StringSetting(Setting):
 
 class SettingsContainer(object):
 
-    def __init__(self):
+    def __init__(self, path):
         self._data = []
+        self.path = path
 
     def __iter__(self):
         return (item for item in self._data)
@@ -327,7 +329,7 @@ def parse_config(path=None):
                          '%r', path)
         return []
 
-    settings = SettingsContainer()
+    settings = SettingsContainer(path)
 
     for setting in config.sections():
         data = dict(config.items(setting))
