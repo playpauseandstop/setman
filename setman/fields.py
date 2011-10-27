@@ -70,7 +70,7 @@ class SettingsField(models.TextField):
         try:
             data = simplejson.loads(value,
                                     encoding=django_settings.DEFAULT_CHARSET)
-        except ValueError, e:
+        except ValueError:
             # If string could not parse as JSON it's means that it's Python
             # string saved to SettingsField.
             return value
@@ -85,13 +85,11 @@ class SettingsField(models.TextField):
 
 # Add suport of SettingsField for South
 def add_south_introspector_rules():
-    from south.modelsinspector import add_introspection_rules
-
     rules = [((SettingsField, ), [], {})]
     add_introspection_rules(rules, ['^setman\.fields'])
 
 try:
-    import south
+    from south.modelsinspector import add_introspection_rules
 except ImportError:
     pass
 else:

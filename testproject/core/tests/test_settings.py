@@ -1,5 +1,3 @@
-from random import choice
-
 from django.conf import settings as django_settings
 from django.test import TestCase
 

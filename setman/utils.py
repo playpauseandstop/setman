@@ -2,7 +2,7 @@ import logging
 import os
 
 from ConfigParser import ConfigParser, Error as ConfigParserError
-from decimal import Decimal, ROUND_UP
+from decimal import Decimal
 
 from django.conf import settings as django_settings
 from django.utils import importlib
@@ -28,10 +28,11 @@ class Setting(object):
     validators = None
 
     def __init__(self, **kwargs):
-        for key, value in kwargs.items():
+        for key, _ in kwargs.items():
             if not hasattr(self, key):
                 kwargs.pop(key)
         self.__dict__.update(kwargs)
+        self.validators = self._parse_validators(self.validators)
 
     def to_field(self):
         """
@@ -44,6 +45,38 @@ class Setting(object):
         Convert setting value to necessary Python type.
         """
         raise NotImplementedError
+
+    def _parse_validators(self, value):
+        """
+        Parse validators string and try to convert it to list with actual
+        validator functions.
+        """
+        if not value:
+            return []
+
+        items = map(lambda item: item.strip(), value.split(','))
+        validators = []
+
+        for item in items:
+            module, attr = item.rsplit('.', 1)
+
+            try:
+                mod = importlib.import_module(module)
+            except ImportError:
+                logger.exception('Cannot load %r validator for %s setting.',
+                                 item, self.name)
+                continue
+
+            try:
+                validator = getattr(mod, attr)
+            except AttributeError:
+                logger.exception('Cannot load %r validator for %s setting.',
+                                 item, self.name)
+                continue
+
+            validators.append(validator)
+
+        return validators
 
 
 class SettingTypeDoesNotExist(Exception):
@@ -210,8 +243,6 @@ def parse_config(path=None):
 
     Also current function can called with ``path`` string.
     """
-    handler = None
-
     if path is None:
         path = getattr(django_settings, 'SETMAN_SETTINGS_FILE', None)
 
