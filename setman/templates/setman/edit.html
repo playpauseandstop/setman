@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{{ _("Edit Settings") }}{% endblock %}
+{% block content_title %}{{ _("Edit Settings") }}{% endblock %}
+{% block content %}
+
+    {% if auth_forbidden %}
+    <h3 class="errors">{{ _("Forbidden") }}</h3>
+    <p>{{ _("You have not necessary rights to access current page.") }}</p>
+    {% else %}
+    <form action="" method="post">
+        {% csrf_token %}
+
+        <dl class="fields">
+        {% for f in form %}
+            <dt><label for="{{ f.auto_id }}">{{ f.label }}</label></dt>
+            <dd class="field">{{ f }}</dd>
+            {% if f.errors %}<dd class="errors">{{ f.errors|join:" " }}</dd>{% endif %}
+            {% if f.help_text %}<dd class="help">{{ f.help_text }}</dd>{% endif %}
+        {% endfor %}
+        </dl>
+
+        <p class="buttons">
+            <input type="submit" value="{{ _("Submit") }}">
+        </p>
+    </form>
+
+    <p>{% url home as home_url %}{% blocktrans %}Back to <a href="{{ home_url }}">home page</a>.{% endblocktrans %}</p>
+    {% endif %}
+
+{% endblock %}

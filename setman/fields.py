@@ -3,7 +3,6 @@ from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
 from django.utils import simplejson
 
-from setman import forms
 from setman.utils import AVAILABLE_SETTINGS
 
 
@@ -38,17 +37,6 @@ class SettingsField(models.TextField):
         def set_json(model, json):
             setattr(model, self.attname, self.to_python(json))
         setattr(cls, 'set_%s_json' % self.name, set_json)
-
-    def formfield(self, **kwargs):
-        defaults = {'form_class': forms.SettingsField}
-        defaults.update(kwargs)
-        field = super(SettingsField, self).formfield(**defaults)
-
-        if hasattr(field.widget, 'json_options') and \
-           not 'cls' in field.widget.json_options:
-            field.widget.json_options.update({'cls': self.encoder_cls})
-
-        return field
 
     def get_default(self):
         if self.has_default():

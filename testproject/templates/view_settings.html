@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{{ _("Configuration Definition File") }}{% endblock %}
+{% block content_title %}{{ _("Configuration Definition File") }}{% endblock %}
+{% block content %}
+
+    <pre><code>{{ content }}</code></pre>
+    <p>{% url home as home_url %}{% blocktrans %}Back to <a href="{{ home_url }}">home page</a>.{% endblocktrans %}</p>
+
+{% endblock %}

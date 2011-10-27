@@ -4,6 +4,7 @@ import os
 from ConfigParser import ConfigParser, Error as ConfigParserError
 from decimal import Decimal
 
+from django import forms
 from django.conf import settings as django_settings
 from django.utils import importlib
 
@@ -21,6 +22,9 @@ class Setting(object):
     file.
     """
     default = None
+    field_args = ('label', 'help_text', 'initial', 'validators')
+    field_klass = None
+    field_kwargs = {}
     help_text = None
     label = None
     name = None
@@ -28,23 +32,54 @@ class Setting(object):
     validators = None
 
     def __init__(self, **kwargs):
+        restricted = ('field_klass', 'field_args', 'field_kwargs')
+
         for key, _ in kwargs.items():
             if not hasattr(self, key):
                 kwargs.pop(key)
+
+            if key in restricted:
+                kwargs.pop(key)
+
         self.__dict__.update(kwargs)
         self.validators = self._parse_validators(self.validators)
+
+    def __repr__(self):
+        return u'<%s: %s>' % (self.__class__.__name__, self.__unicode__())
+
+    def __unicode__(self):
+        return u'%s = %r' % (self.name, self.initial)
+
+    @property
+    def initial(self):
+        """
+        Read real setting value from database or if impossible - just send
+        default setting value.
+        """
+        from setman import settings
+        return getattr(settings, self.name, self.default)
 
     def to_field(self):
         """
         Convert current setting instance to form field.
         """
-        raise NotImplementedError
+        if not self.field_klass:
+            raise ValueError('Please, supply `field_klass` attribute first.')
+
+        kwargs = {}
+
+        for arg in self.field_args:
+            kwargs.update({arg: getattr(self, arg)})
+
+        kwargs.update(**self.field_kwargs)
+        return self.field_klass(**kwargs)
 
     def to_python(self, value):
         """
-        Convert setting value to necessary Python type.
+        Convert setting value to necessary Python type. By default, returns
+        same value without any conversion.
         """
-        raise NotImplementedError
+        return value
 
     def _parse_validators(self, value):
         """
@@ -90,6 +125,8 @@ class BooleanSetting(Setting):
     """
     Boolean setting.
     """
+    field_klass = forms.BooleanField
+    field_kwargs = {'required': False}
     type = 'boolean'
 
     def __init__(self, **kwargs):
@@ -111,8 +148,12 @@ class BooleanSetting(Setting):
 
 
 class ChoiceSetting(Setting):
-
+    """
+    Choice setting.
+    """
     choices = None
+    field_args = Setting.field_args + ('choices', )
+    field_klass = forms.ChoiceField
     type = 'choice'
 
     def __init__(self, **kwargs):
@@ -122,13 +163,24 @@ class ChoiceSetting(Setting):
     def build_choices(self, value):
         return tuple(map(lambda s: s.strip(), value.split(',')))
 
-    def to_python(self, value):
-        return value
+    def to_field(self):
+        old_choices = self.choices
+        self.choices = [(choice, choice) for choice in old_choices]
+
+        field = super(ChoiceSetting, self).to_field()
+        self.choices = old_choices
+
+        return field
 
 
 class DecimalSetting(Setting):
-
+    """
+    Decimal setting.
+    """
     decimal_places = None
+    field_args = Setting.field_args + ('decimal_places', 'max_digits',
+                                       'max_value', 'min_value')
+    field_klass = forms.DecimalField
     max_digits = None
     max_value = None
     min_value = None
@@ -152,7 +204,11 @@ class DecimalSetting(Setting):
 
 
 class IntSetting(Setting):
-
+    """
+    Integer setting.
+    """
+    field_args = Setting.field_args + ('max_value', 'min_value')
+    field_klass = forms.IntegerField
     max_value = None
     min_value = None
     type = 'int'
@@ -171,7 +227,10 @@ class IntSetting(Setting):
 
 
 class FloatSetting(IntSetting):
-
+    """
+    Float setting.
+    """
+    field_klass = forms.FloatField
     type = 'float'
 
     def to_python(self, value):
@@ -182,20 +241,25 @@ class FloatSetting(IntSetting):
 
 
 class StringSetting(Setting):
-
+    """
+    String setting.
+    """
+    field_args = Setting.field_args + ('max_length', 'min_length')
+    field_klass = forms.CharField
     max_length = None
     min_length = None
     regex = None
     type = 'string'
 
-    def to_python(self, value):
-        return value
-
 
 class SettingsContainer(object):
 
-    def __init__(self):
+    def __init__(self, path):
         self._data = []
+        self.path = path
+
+    def __iter__(self):
+        return (item for item in self._data)
 
     def __len__(self):
         return len(self._data)
@@ -265,7 +329,7 @@ def parse_config(path=None):
                          '%r', path)
         return []
 
-    settings = SettingsContainer()
+    settings = SettingsContainer(path)
 
     for setting in config.sections():
         data = dict(config.items(setting))
