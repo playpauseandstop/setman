@@ -84,8 +84,14 @@ class TestUISettingsForm(TestCase):
              'CHOICE_SETTING': ['apple'],
              'FLOAT_SETTING': ['79.4']})
 
-        # Max Value
+        # Min Value
         self.assertContains(response,
             'Ensure this value is greater than or equal to 16.')
         self.assertContains(response,
             'Ensure this value is greater than or equal to 0.')
+
+    def test_homepage(self):
+        c = Client()
+        response = c.get(reverse('homepage'))
+        self.assertContains(response, 'Edit Settings')
+        self.assertContains(response, self.edit_settings_url)
