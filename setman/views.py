@@ -33,6 +33,16 @@ def edit(request):
     But also, don't forget that only **logged** in users can access this page.
     Not guest users able to edit custom project settings in any way.
     """
+    permitted = getattr(django_settings, 'SETMAN_AUTH_PERMITTED', None)
+
+    if not permitted:
+        permitted = lambda user: user.is_superuser
+
+    if not permitted(request.user):
+        return render_to_response('setman/edit.html',
+                                  {'auth_forbidden': True},
+                                  RequestContext(Request))
+
     if request.method == 'POST':
         form = SettingsForm(request.POST)
 
