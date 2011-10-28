@@ -1,0 +1,50 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_modify adminmedia %}
+
+{% block title %}{{ _("Edit Settings") }}{% endblock %}
+{% block content_title %}<h1>{{ _("Edit Settings") }}</h1>{% endblock %}
+{% block extrastyle %}{{ block.super }}<link rel="stylesheet" type="text/css" href="{% admin_media_prefix %}css/forms.css" />{% endblock %}
+
+{% block breadcrumbs %}<div class="breadcrumbs"><a href="/admin/">{% trans 'Home' %}</a>{% if title %} &rsaquo; {{ title }}{% endif %}</div>{% endblock %}
+
+{% block content %}
+
+    {% if auth_forbidden %}
+    <h3 class="errors">{{ _("Access Forbidden") }}</h3>
+    <p>{{ _("You have not necessary rights to access current page.") }}</p>
+    {% else %}
+    <form action="" method="post">
+        {% csrf_token %}
+
+        {% if form.errors %}
+            <p class="errornote">{{ _("Settings cannot be saved cause of validation issues. Check for errors below.") }}</p>
+        {% endif %}
+
+        <fieldset class="module aligned">
+            {% for f in form %}
+                <div class="form-row {% if f.errors %}errors{% endif %}">
+
+                {% if f.errors %}
+                    <ul class="errorlist">
+                        {% for error in f.errors %}
+                            <li>{{ error }}</li>             
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+                    <div>
+                        <label for="id_email">{{ f.label }}</label>
+                        {{ f }}
+                        {% if f.help_text %}<p class="help">{{ f.help_text }}</p>{% endif %}
+                    </div>
+                </div>
+            {% endfor %}
+        </fieldset>
+
+        <p class="buttons">
+            <button type="submit">{{ _("Submit") }}</button>
+            <button><a href="{% url setman_revert %}?redirect_to=/admin/setman/settings/" title="{{ _("Revert all settings to default values") }}">{{ _("Revert") }}</a></button>
+        </p>
+    </form>
+    {% endif %}
+
+{% endblock %}
