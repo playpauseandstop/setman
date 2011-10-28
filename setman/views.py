@@ -24,7 +24,7 @@ def auth_permitted(user):
 
 
 @login_required
-def edit(request):
+def edit(request, template='setman/edit.html', is_admin=False):
     """
     Edit Settings page.
 
@@ -45,6 +45,10 @@ def edit(request):
     But also, don't forget that only **logged** in users can access this page.
     Not guest users able to edit custom project settings in any way.
     """
+    #import ipdb; ipdb.set_trace()
+    if is_admin:
+        template = 'setman/admin/edit.html'
+
     if not auth_permitted(request.user):
         return render(request,
                       'setman/edit.html',
@@ -64,7 +68,7 @@ def edit(request):
     else:
         form = SettingsForm()
 
-    return render(request, 'setman/edit.html', {'form': form})
+    return render(request, template, {'form': form})
 
 
 @login_required
@@ -74,7 +78,8 @@ def revert(request):
 
     This view uses same permission rules as "Edit Settings" view.
     """
-    redirect_to = reverse('setman_edit')
+    redirect_to = request.GET.get('redirect_to', reverse('setman_edit'))
+
     if not auth_permitted(request.user):
         return render(request,
                       'setman/edit.html',
