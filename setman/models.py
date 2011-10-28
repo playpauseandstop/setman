@@ -3,6 +3,7 @@ from django.db import models
 from django.db.models import signals
 from django.dispatch import receiver
 from django.utils.translation import ugettext_lazy as _
+from django.utils.encoding import force_unicode
 
 from setman.fields import SettingsField
 from setman.managers import CACHE_KEY, SettingsManager
@@ -44,7 +45,7 @@ class Settings(models.Model):
             return super(Settings, self).__setattr__(name, value)
 
     def __unicode__(self):
-        return _('Project settings')
+        return force_unicode(_('Project settings'))
 
     def save(self, *args, **kwargs):
         """
