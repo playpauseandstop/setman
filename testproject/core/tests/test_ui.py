@@ -93,6 +93,24 @@ class TestUI(TestCase):
     def test_edit_settings_errors(self):
         client = self.login(TEST_USERNAME)
 
+        for key, values in WRONG_SETTINGS.items():
+            old_value = getattr(settings, key)
+
+            for value in values:
+                data = TEST_SETTINGS.copy()
+                data.update({key: value})
+
+                response = client.post(self.edit_settings_url, data)
+                self.assertContains(
+                    response,
+                    'Settings cannot be saved cause of validation issues. ' \
+                    'Check for errors below.'
+                )
+                self.assertContains(response, '<dd class="errors">')
+
+                settings._clear()
+                self.assertEqual(getattr(settings, key), old_value)
+
     def test_home(self):
         client = self.login(TEST_USERNAME)
         response = client.get(self.home_url)
