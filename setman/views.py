@@ -3,12 +3,14 @@ from random import randint
 from django.conf import settings as django_settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.views.generic.simple import direct_to_template
-from django.shortcuts import redirect, render_to_response
+from django.core.urlresolvers import reverse
+from django.shortcuts import redirect, render
 from django.template import RequestContext
 from django.utils.translation import ugettext as _
 
+from setman import settings
 from setman.forms import SettingsForm
+from setman.utils import AVAILABLE_SETTINGS
 
 
 @login_required
@@ -39,21 +41,53 @@ def edit(request):
         permitted = lambda user: user.is_superuser
 
     if not permitted(request.user):
-        return render_to_response('setman/edit.html',
-                                  {'auth_forbidden': True},
-                                  RequestContext(Request))
+        return render(request,
+                      'setman/edit.html',
+                      {'auth_forbidden': True},
+                      status=403)
 
     if request.method == 'POST':
         form = SettingsForm(request.POST)
 
         if form.is_valid():
             form.save()
-            messages.success(request, _('Settings have been updated.'))
+            messages.success(
+                request, _('Settings have been succesfully updated.')
+            )
 
             return redirect('%s?%d' % (request.path, randint(1000, 9999)))
     else:
         form = SettingsForm()
 
-    return render_to_response('setman/edit.html',
-                              {'form': form},
-                              RequestContext(request))
+    return render(request, 'setman/edit.html', {'form': form})
+
+
+@login_required
+def revert(request):
+    """
+    Revert settings to default values.
+
+    This view uses same permission rules as "Edit Settings" view.
+    """
+    permitted = getattr(django_settings, 'SETMAN_AUTH_PERMITTED', None)
+    redirect_to = reverse('setman_edit')
+
+    if not permitted:
+        permitted = lambda user: user.is_superuser
+
+    if not permitted(request.user):
+        return render(request,
+                      'setman/edit.html',
+                      {'auth_forbidden': True},
+                      status=403)
+
+    for setting in AVAILABLE_SETTINGS:
+        setattr(settings, setting.name, setting.default)
+
+    settings.save()
+    messages.success(
+        request, _('Settings have been reverted to default values.')
+    )
+
+    return redirect('%s?%d' % (redirect_to, randint(1000, 9999)))
+
