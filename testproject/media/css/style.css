@@ -67,7 +67,7 @@ form .fields dd {
     margin-left: 120px;
 }
 
-form .fields dd.errors {
+form .fields dd.errors, h3.errors {
     color: darkred;
 }
 
@@ -93,15 +93,20 @@ form p.buttons {
     margin-top: 1em;
 }
 
-form p.buttons input {
+form p.buttons button {
     background-color: #313f54;
     border: 1px solid #cae6e8;
     border-radius: 4px;
     color: #cae6e8;
     cursor: pointer;
-    font-size: 1em;
+    font-size: 12pt;
     padding: 4px 16px;
     text-shadow: 1px 1px 1px #2b2e2e;
+}
+
+form p.buttons button a {
+    color: #cae6e8;
+    text-decoration: none;
 }
 
 pre {

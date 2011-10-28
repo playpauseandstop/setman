@@ -6,12 +6,13 @@ from django.core.urlresolvers import reverse
 from django.test import TestCase as DjangoTestCase
 
 from setman import settings
+from setman.models import Settings
 from setman.utils import AVAILABLE_SETTINGS
 
 from testproject.core.tests.test_models import TEST_SETTINGS
 
 
-__all__ = ('TestUI', )
+__all__ = ('TestUI', 'TestUIForbidden')
 
 
 NEW_SETTINGS = {
@@ -45,6 +46,7 @@ class TestCase(DjangoTestCase):
 
         self.edit_settings_url = reverse('setman_edit')
         self.home_url = reverse('home')
+        self.revert_settings_url = reverse('setman_revert')
         self.view_settings_url = reverse('view_settings')
 
     def tearDown(self):
@@ -133,3 +135,39 @@ class TestUI(TestCase):
             'Log in with oDesk account <a href="%s?next=/">here</a>.' % \
             reverse('django_odesk.auth.views.authenticate')
         )
+
+    def test_revert_settings(self):
+        Settings.objects.create(data=NEW_SETTINGS)
+
+        client = self.login(TEST_USERNAME)
+        response = client.get(self.revert_settings_url)
+
+        self.assertEquals(response.status_code, 302)
+        self.assertIn(self.edit_settings_url, response['Location'])
+
+        for key, value in TEST_SETTINGS.items():
+            self.assertEqual(getattr(settings, key), value)
+
+    def test_view_settings(self):
+        client = self.login(TEST_USERNAME)
+        response = client.get(self.view_settings_url)
+        self.assertContains(
+            response, 'Configuration Definition File', count=2
+        )
+
+
+class TestUIForbidden(TestCase):
+
+    def setUp(self):
+        super(TestUIForbidden, self).setUp()
+        django_settings.SETMAN_AUTH_PERMITTED = lambda user: user.is_superuser
+
+    def test_edit_settings_forbidden(self):
+        client = self.login(TEST_USERNAME)
+        response = client.get(self.edit_settings_url)
+        self.assertContains(response, 'Access Forbidden', status_code=403)
+
+    def test_revert_settings_forbidden(self):
+        client = self.login(TEST_USERNAME)
+        response = client.get(self.revert_settings_url)
+        self.assertContains(response, 'Access Forbidden', status_code=403)
