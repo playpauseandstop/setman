@@ -8,7 +8,7 @@ Requirements
 ============
 
 * `Python <http://www.python.org/>`_ 2.6 or higher
-* `Django <http://www.djangoproject.com/>`_ 1.2 or higher
+* `Django <http://www.djangoproject.com/>`_ 1.3 or higher
 
 Installation
 ============
