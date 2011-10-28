@@ -11,6 +11,12 @@
     <form action="" method="post">
         {% csrf_token %}
 
+        {% if form.errors %}
+        <ul class="messages">
+            <li class="error">{{ _("Settings cannot be saved cause of validation issues. Check for errors below.") }}</li>
+        </ul>
+        {% endif %}
+
         <dl class="fields">
         {% for f in form %}
             <dt><label for="{{ f.auto_id }}">{{ f.label }}</label></dt>

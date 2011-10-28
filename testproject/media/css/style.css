@@ -124,11 +124,17 @@ ul.messages {
 ul.messages li {
     border-radius: 4px;
     margin: 1px;
-    padding: 4px;
+    padding: 4px 8px;
+}
+
+ul.messages .error {
+    background-color: pink;
+    color: darkred;
 }
 
 ul.messages .success {
     background-color: lightgreen;
+    color: darkgreen;
 }
 
 .github-ribbon img {
