@@ -5,7 +5,7 @@
 {% block content %}
 
     {% if auth_forbidden %}
-    <h3 class="errors">{{ _("Forbidden") }}</h3>
+    <h3 class="errors">{{ _("Access Forbidden") }}</h3>
     <p>{{ _("You have not necessary rights to access current page.") }}</p>
     {% else %}
     <form action="" method="post">
@@ -27,7 +27,8 @@
         </dl>
 
         <p class="buttons">
-            <input type="submit" value="{{ _("Submit") }}">
+            <button type="submit">{{ _("Submit") }}</button>
+            <button><a href="{% url setman_revert %}" title="{{ _("Revert all settings to default values") }}">{{ _("Revert") }}</a></button>
         </p>
     </form>
 
