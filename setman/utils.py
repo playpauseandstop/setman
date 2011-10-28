@@ -251,6 +251,17 @@ class StringSetting(Setting):
     regex = None
     type = 'string'
 
+    def to_field(self):
+        """
+        Use ``RegexField`` for string setting if ``regex`` was filled in
+        configuration definition file.
+        """
+        if self.regex:
+            if not 'regex' in self.field_args:
+                self.field_args = self.field_args + ('regex', )
+            self.field_klass = forms.RegexField
+        return super(StringSetting, self).to_field()
+
 
 class SettingsContainer(object):
 
