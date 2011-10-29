@@ -1,6 +1,7 @@
 *.pyc
 *.pyo
 
+.doit.db
 .doit.db.db
 sqlite3.db
 
