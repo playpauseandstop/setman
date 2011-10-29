@@ -32,7 +32,7 @@ def view_settings(request):
     """
     filename = AVAILABLE_SETTINGS.path
 
-    handler = open(filename, 'rb+')
+    handler = open(filename, 'rb')
     content = handler.read()
     handler.close()
 
