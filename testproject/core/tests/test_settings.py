@@ -1,4 +1,5 @@
 from django.conf import settings as django_settings
+from django.core.exceptions import ValidationError
 from django.test import TestCase
 
 from setman import settings
@@ -25,6 +26,8 @@ class TestGlobalSettings(TestCase):
             )
 
     def test_filled_settings(self):
+        self.assertEqual(Settings.objects.count(), 0)
+
         instance = Settings.objects.create(data=TEST_SETTINGS)
         self.assertEqual(instance.data, TEST_SETTINGS)
 
@@ -43,7 +46,7 @@ class TestGlobalSettings(TestCase):
             self.assertEqual(getattr(settings, name), value)
 
     def test_save_settings(self):
-        Settings.objects.create(data=TEST_SETTINGS)
+        instance = Settings.objects.create(data=TEST_SETTINGS)
 
         settings.BOOLEAN_SETTING = True
         settings.save()
@@ -57,3 +60,7 @@ class TestGlobalSettings(TestCase):
         instance.save()
 
         self.assertFalse(instance.BOOLEAN_SETTING)
+
+    def test_validation(self):
+        settings.INT_SETTING = 12
+        self.assertRaises(ValidationError, settings.save)
