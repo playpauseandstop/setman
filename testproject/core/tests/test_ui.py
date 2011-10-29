@@ -59,7 +59,7 @@ class TestCase(DjangoTestCase):
             self.old_AUTHENTICATION_BACKENDS
         settings._clear()
 
-    def login(self, username):
+    def login(self, username, is_admin=False):
         try:
             user = User.objects.get(username=username)
         except User.DoesNotExist:
@@ -70,6 +70,11 @@ class TestCase(DjangoTestCase):
             user.set_password(username)
             user.save()
 
+        if is_admin:
+            user.is_staff = True
+            user.is_superuser = True
+            user.save()
+
         client = self.client
         client.login(username=username, password=username)
 
@@ -77,6 +82,17 @@ class TestCase(DjangoTestCase):
 
 
 class TestUI(TestCase):
+
+    def test_admin(self):
+        response = self.client.get('/admin/')
+        self.assertNotContains(response, 'Setman')
+        self.assertNotContains(response, 'Settings</a>')
+
+        client = self.login(TEST_USERNAME, is_admin=True)
+        response = client.get('/admin/')
+
+        self.assertContains(response, 'Setman')
+        self.assertContains(response, 'Settings</a>')
 
     def test_docs(self):
         client = self.login(TEST_USERNAME)
