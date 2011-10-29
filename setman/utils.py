@@ -2,12 +2,13 @@ import copy
 import logging
 import os
 
-from ConfigParser import ConfigParser, Error as ConfigParserError
+from ConfigParser import Error as ConfigParserError, SafeConfigParser
 from decimal import Decimal
 
 from django import forms
 from django.conf import settings as django_settings
 from django.utils import importlib
+from django.utils.datastructures import SortedDict
 
 
 __all__ = ('AVAILABLE_SETTINGS', 'parse_config')
@@ -324,7 +325,7 @@ def force_bool(value):
     if isinstance(value, (bool, int)):
         return bool(value)
 
-    boolean_states = ConfigParser._boolean_states
+    boolean_states = SafeConfigParser._boolean_states
     if not value.lower() in boolean_states:
         return None
 
@@ -379,7 +380,9 @@ def parse_config(path=None):
                      'from parsing!', path)
         return empty_settings
 
-    config = ConfigParser()
+    # Use ``SortedDict`` instance for reading sections on config file instead
+    # of default ``dict`` that can shuffle the sections.
+    config = SafeConfigParser(dict_type=SortedDict)
 
     try:
         config.read(path)
