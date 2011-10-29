@@ -4,6 +4,7 @@
 .doit.db.db
 sqlite3.db
 
+docs/_build/
 reports/
 testproject/local_settings.py
-testproject/ve/*
+testproject/ve/
