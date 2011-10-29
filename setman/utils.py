@@ -116,18 +116,9 @@ class Setting(object):
         validators = []
 
         for item in items:
-            module, attr = item.rsplit('.', 1)
-
             try:
-                mod = importlib.import_module(module)
-            except ImportError:
-                logger.exception('Cannot load %r validator for %s setting.',
-                                 item, self.name)
-                continue
-
-            try:
-                validator = getattr(mod, attr)
-            except AttributeError:
+                validator = load_from_path(item)
+            except (AttributeError, ImportError):
                 logger.exception('Cannot load %r validator for %s setting.',
                                  item, self.name)
                 continue
@@ -296,14 +287,17 @@ class SettingsContainer(object):
         setattr(self, value.name, value)
 
 
-def data_to_setting(data):
+def data_to_setting(data, additional_types=None):
     """
     Convert data dict to setting instance.
     """
+    additional_types = additional_types or []
     setting = None
     setting_type = data.get('type')
 
-    for value in globals().values():
+    all_values = globals().values() + additional_types
+
+    for value in all_values:
         try:
             if not issubclass(value, Setting):
                 continue
@@ -337,6 +331,15 @@ def force_bool(value):
     return boolean_states[value.lower()]
 
 
+def load_from_path(path):
+    """
+    Load class or function from string path.
+    """
+    module, attr = path.rsplit('.', 1)
+    mod = importlib.import_module(module)
+    return getattr(mod, attr)
+
+
 def parse_config(path=None):
     """
     Parse Configuration Definition File.
@@ -349,6 +352,18 @@ def parse_config(path=None):
 
     Also current function can called with ``path`` string.
     """
+    additional_types = getattr(django_settings, 'SETMAN_ADDITIONAL_TYPES', ())
+    additional_setting_types = []
+
+    for item in additional_types:
+        try:
+            additional_type = load_from_path(item)
+        except (AttributeError, TypeError):
+            logger.exception('Cannot load %r additional setting type from ' \
+                             'configuration.', item)
+
+        additional_setting_types.append(additional_type)
+
     if path is None:
         path = getattr(django_settings, 'SETMAN_SETTINGS_FILE', None)
 
@@ -380,7 +395,7 @@ def parse_config(path=None):
         data.update({'name': setting})
 
         try:
-            setting = data_to_setting(data)
+            setting = data_to_setting(data, additional_setting_types)
         except SettingTypeDoesNotExist:
             logger.exception('Cannot find proper setting class for %r type',
                              data.get('type'))

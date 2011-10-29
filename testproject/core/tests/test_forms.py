@@ -16,6 +16,7 @@ SETTINGS_FIELDS = {
     'DECIMAL_SETTING': forms.DecimalField,
     'FLOAT_SETTING': forms.FloatField,
     'INT_SETTING': forms.IntegerField,
+    'IP_SETTING': forms.IPAddressField,
     'STRING_SETTING': forms.RegexField,
     'VALIDATOR_SETTING': forms.CharField,
 }

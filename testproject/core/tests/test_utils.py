@@ -19,7 +19,7 @@ class TestUtils(TestCase):
     def test_parse_config_default_path(self):
         settings = parse_config()
 
-        self.assertEqual(len(settings), 7)
+        self.assertEqual(len(settings), 8)
         self.assertEqual(settings.path,
                          os.path.join(django_settings.DIRNAME, 'settings.cfg'))
 
@@ -68,6 +68,13 @@ class TestUtils(TestCase):
         self.assertIsNotNone(setting.regex)
         self.assertIsNotNone(setting.label)
         self.assertIsNotNone(setting.help_text)
+
+    def test_parse_config_additional_type(self):
+        settings = parse_config()
+
+        setting = settings.IP_SETTING
+        self.assertEqual(setting.type, 'ip')
+        self.assertEqual(setting.default, '127.0.0.1')
 
     def test_parse_config_path(self):
         path = os.path.join(django_settings.DIRNAME, 'test_settings.cfg')
