@@ -190,9 +190,10 @@ ODESK_AUTH_USERS = ()
 # ====================
 # setman configuration
 # ====================
-#
-# Permit access for edit settings to any user
-#
+SETMAN_ADDITIONAL_TYPES = (
+    'testproject.core.utils.IPAddressSetting',
+)
+# Allow edit settings to any user
 SETMAN_AUTH_PERMITTED = lambda user: user
 
 # ===================

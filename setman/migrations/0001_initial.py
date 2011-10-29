@@ -12,6 +12,8 @@ class Migration(SchemaMigration):
         db.create_table('setman_settings', (
             ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
             ('data', self.gf('setman.fields.SettingsField')(default='', blank=True)),
+            ('create_date', self.gf('django.db.models.fields.DateTimeField')(auto_now_add=True, blank=True)),
+            ('update_date', self.gf('django.db.models.fields.DateTimeField')(auto_now=True, blank=True)),
         ))
         db.send_create_signal('setman', ['Settings'])
 
@@ -25,8 +27,10 @@ class Migration(SchemaMigration):
     models = {
         'setman.settings': {
             'Meta': {'object_name': 'Settings'},
+            'create_date': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
             'data': ('setman.fields.SettingsField', [], {'default': "''", 'blank': 'True'}),
-            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'})
+            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'update_date': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'})
         }
     }
 

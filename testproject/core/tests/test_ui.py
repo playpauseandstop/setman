@@ -1,3 +1,5 @@
+import copy
+
 from decimal import Decimal
 
 from django.conf import settings as django_settings
@@ -5,7 +7,7 @@ from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
 from django.test import TestCase as DjangoTestCase
 
-from setman import settings
+from setman import get_version, settings
 from setman.models import Settings
 from setman.utils import AVAILABLE_SETTINGS
 
@@ -20,6 +22,7 @@ NEW_SETTINGS = {
     'CHOICE_SETTING': 'waterlemon',
     'DECIMAL_SETTING': Decimal('5.33'),
     'INT_SETTING': 20,
+    'IP_SETTING': '192.168.1.2',
     'FLOAT_SETTING': 189.2,
     'STRING_SETTING': 'setting',
     'VALIDATOR_SETTING': 'abc xyz',
@@ -29,6 +32,7 @@ WRONG_SETTINGS = {
     'CHOICE_SETTING': ('pepper', ),
     'DECIMAL_SETTING': (Decimal(-1), Decimal(12), Decimal('8.3451')),
     'INT_SETTING': (12, 48),
+    'IP_SETTING': ('127.0.0', ),
     'FLOAT_SETTING': ('', ),
     'STRING_SETTING': ('Not started from s', ),
     'VALIDATOR_SETTING': ('abc', 'xyz', 'Something'),
@@ -44,6 +48,7 @@ class TestCase(DjangoTestCase):
             'django.contrib.auth.backends.ModelBackend',
         )
 
+        self.docs_url = reverse('docs')
         self.edit_settings_url = reverse('setman_edit')
         self.home_url = reverse('home')
         self.revert_settings_url = reverse('setman_revert')
@@ -54,7 +59,7 @@ class TestCase(DjangoTestCase):
             self.old_AUTHENTICATION_BACKENDS
         settings._clear()
 
-    def login(self, username):
+    def login(self, username, is_admin=False):
         try:
             user = User.objects.get(username=username)
         except User.DoesNotExist:
@@ -65,6 +70,11 @@ class TestCase(DjangoTestCase):
             user.set_password(username)
             user.save()
 
+        if is_admin:
+            user.is_staff = True
+            user.is_superuser = True
+            user.save()
+
         client = self.client
         client.login(username=username, password=username)
 
@@ -72,6 +82,30 @@ class TestCase(DjangoTestCase):
 
 
 class TestUI(TestCase):
+
+    def test_admin(self):
+        response = self.client.get('/admin/')
+        self.assertNotContains(response, 'Setman')
+        self.assertNotContains(response, 'Settings</a>')
+
+        client = self.login(TEST_USERNAME, is_admin=True)
+        response = client.get('/admin/')
+
+        self.assertContains(response, 'Setman')
+        self.assertContains(response, 'Settings</a>')
+
+    def test_docs(self):
+        client = self.login(TEST_USERNAME)
+        response = client.get(self.docs_url, follow=True)
+
+        try:
+            self.assertContains(response, 'Documentation', count=2)
+        except AssertionError:
+            self.assertContains(
+                response,
+                'django-setman %s documentation' % get_version(),
+                count=4
+            )
 
     def test_edit_settings(self):
         client = self.login(TEST_USERNAME)
@@ -99,7 +133,7 @@ class TestUI(TestCase):
             old_value = getattr(settings, key)
 
             for value in values:
-                data = TEST_SETTINGS.copy()
+                data = copy.deepcopy(TEST_SETTINGS)
                 data.update({key: value})
 
                 response = client.post(self.edit_settings_url, data)

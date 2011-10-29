@@ -1,7 +1,9 @@
 from django.core.cache import cache
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import signals
 from django.dispatch import receiver
+from django.utils.encoding import force_unicode
 from django.utils.translation import ugettext_lazy as _
 from django.utils.encoding import force_unicode
 
@@ -15,8 +17,17 @@ __all__ = ('Settings', )
 class Settings(models.Model):
     """
     Store all custom project settings in ``data`` field as ``json`` dump.
+
+    Model also have two more fields:
+
+    * ``create_date`` - Time when model instance has been created.
+    * ``update_date`` - Time when model instance has been changed last time.
+
     """
     data = SettingsField(_('data'), blank=True, default='', editable=False)
+
+    create_date = models.DateTimeField(_('created at'), auto_now_add=True)
+    update_date = models.DateTimeField(_('updated at'), auto_now=True)
 
     objects = SettingsManager()
 
@@ -47,29 +58,45 @@ class Settings(models.Model):
     def __unicode__(self):
         return force_unicode(_('Project settings'))
 
-    def save(self, *args, **kwargs):
+    def validate_unique(self, exclude=None):
         """
-        Do not store settings instance to database if another settings instance
-        already stored there.
+        Check that no else ``Settings`` insances has been created.
         """
         lookup = {} if not self.pk else {'pk': self.pk}
         counter = self._default_manager.exclude(**lookup).count()
 
-        if counter:
-            raise ValueError('Cannot save another Settings instance. %d '
-                             'Settings instances(s) already exist there.' % \
-                             counter)
+        if counter != 0:
+            raise ValidationError('Only one Settings instance could be ' \
+                                  'created.')
 
-        super(Settings, self).save(*args, **kwargs)
+        return super(Settings, self).validate_unique(exclude)
 
 
 @receiver(signals.post_save, sender=Settings)
 def clear_settings_cache(instance, **kwargs):
     """
-    Clear settings cache and.
+    Clear settings cache if any.
     """
     from setman import settings
     settings._clear()
 
     if CACHE_KEY in cache:
         cache.delete(CACHE_KEY)
+
+
+@receiver(signals.pre_save, sender=Settings)
+def validate_settings(instance, **kwargs):
+    """
+    Validate settings data before save to database.
+    """
+    try:
+        instance.full_clean()
+    except ValidationError, error:
+        # Dirty hack to ignore error messages raised by Django when trying to
+        # re-save already existed instance (it's okay cause we didn't operate
+        # with instance directly read from database, we got instance field data
+        # from the cache)
+        if hasattr(error, 'message_dict') and \
+           error.message_dict.keys() == ['id']:
+            return
+        raise

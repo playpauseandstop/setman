@@ -1,4 +1,5 @@
 from django.conf import settings as django_settings
+from django.core.exceptions import ValidationError
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
 from django.utils import simplejson
@@ -23,9 +24,29 @@ class SettingsField(models.TextField):
     """
     __metaclass__ = models.SubfieldBase
 
+    default = dict
+
     def __init__(self, *args, **kwargs):
+        """
+        Initialize settings field. Add support of ``encoder_cls`` keyword arg.
+        """
         self.encoder_cls = kwargs.pop('encoder_cls', DjangoJSONEncoder)
         super(SettingsField, self).__init__(*args, **kwargs)
+
+    def clean(self, value, instance):
+        """
+        Run validation for each setting value.
+        """
+        data = {} if not value else value
+
+        for name, value in data.items():
+            if not hasattr(AVAILABLE_SETTINGS, name):
+                continue
+
+            setting = getattr(AVAILABLE_SETTINGS, name)
+            data[name] = setting.to_field(initial=value).clean(value)
+
+        return data
 
     def contribute_to_class(self, cls, name):
         super(SettingsField, self).contribute_to_class(cls, name)
@@ -75,6 +96,7 @@ class SettingsField(models.TextField):
 def add_south_introspector_rules():
     rules = [((SettingsField, ), [], {})]
     add_introspection_rules(rules, ['^setman\.fields'])
+
 
 try:
     from south.modelsinspector import add_introspection_rules

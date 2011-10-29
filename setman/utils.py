@@ -1,12 +1,14 @@
+import copy
 import logging
 import os
 
-from ConfigParser import ConfigParser, Error as ConfigParserError
+from ConfigParser import Error as ConfigParserError, SafeConfigParser
 from decimal import Decimal
 
 from django import forms
 from django.conf import settings as django_settings
 from django.utils import importlib
+from django.utils.datastructures import SortedDict
 
 
 __all__ = ('AVAILABLE_SETTINGS', 'parse_config')
@@ -20,14 +22,31 @@ class Setting(object):
     """
     Base class for setting values that can provided in configuration definition
     file.
+
+    The class has next attributes:
+
+    * ``name``
+    * ``type``
+    * ``default``
+    * ``required``
+    * ``label``
+    * ``help_text``
+    * ``validators``
+    * ``field``
+    * ``field_args``
+    * ``field_kwargs``
+
+    The last three attributes can be provided only in Python module, when all
+    other attrs can read from configuration definition file.
     """
     default = None
-    field_args = ('label', 'help_text', 'initial', 'validators')
+    field_args = ('label', 'help_text', 'initial', 'required', 'validators')
     field_klass = None
     field_kwargs = {}
     help_text = None
     label = None
     name = None
+    required = True
     type = None
     validators = None
 
@@ -42,6 +61,7 @@ class Setting(object):
                 kwargs.pop(key)
 
         self.__dict__.update(kwargs)
+        self.required = force_bool(self.required)
         self.validators = self._parse_validators(self.validators)
 
     def __repr__(self):
@@ -59,20 +79,24 @@ class Setting(object):
         from setman import settings
         return getattr(settings, self.name, self.default)
 
-    def to_field(self):
+    def to_field(self, **kwargs):
         """
         Convert current setting instance to form field.
+
+        You should provide ``kwargs`` and all values from here would be used
+        when initing ``field`` instance instead of ``Setting`` attributes.
         """
         if not self.field_klass:
             raise ValueError('Please, supply `field_klass` attribute first.')
 
-        kwargs = {}
+        field_kwargs = {}
 
         for arg in self.field_args:
-            kwargs.update({arg: getattr(self, arg)})
+            value = kwargs[arg] if arg in kwargs else getattr(self, arg)
+            field_kwargs.update({arg: value})
 
-        kwargs.update(**self.field_kwargs)
-        return self.field_klass(**kwargs)
+        field_kwargs.update(**self.field_kwargs)
+        return self.field_klass(**field_kwargs)
 
     def to_python(self, value):
         """
@@ -93,18 +117,9 @@ class Setting(object):
         validators = []
 
         for item in items:
-            module, attr = item.rsplit('.', 1)
-
             try:
-                mod = importlib.import_module(module)
-            except ImportError:
-                logger.exception('Cannot load %r validator for %s setting.',
-                                 item, self.name)
-                continue
-
-            try:
-                validator = getattr(mod, attr)
-            except AttributeError:
+                validator = load_from_path(item)
+            except (AttributeError, ImportError):
                 logger.exception('Cannot load %r validator for %s setting.',
                                  item, self.name)
                 continue
@@ -126,7 +141,7 @@ class BooleanSetting(Setting):
     Boolean setting.
     """
     field_klass = forms.BooleanField
-    field_kwargs = {'required': False}
+    required = False
     type = 'boolean'
 
     def __init__(self, **kwargs):
@@ -137,14 +152,7 @@ class BooleanSetting(Setting):
         """
         Convert string to the boolean type.
         """
-        if isinstance(value, (bool, int)):
-            return bool(value)
-
-        boolean_states = ConfigParser._boolean_states
-        if not value.lower() in boolean_states:
-            return None
-
-        return boolean_states[value.lower()]
+        return force_bool(value)
 
 
 class ChoiceSetting(Setting):
@@ -163,11 +171,11 @@ class ChoiceSetting(Setting):
     def build_choices(self, value):
         return tuple(map(lambda s: s.strip(), value.split(',')))
 
-    def to_field(self):
+    def to_field(self, **kwargs):
         old_choices = self.choices
         self.choices = [(choice, choice) for choice in old_choices]
 
-        field = super(ChoiceSetting, self).to_field()
+        field = super(ChoiceSetting, self).to_field(**kwargs)
         self.choices = old_choices
 
         return field
@@ -251,7 +259,7 @@ class StringSetting(Setting):
     regex = None
     type = 'string'
 
-    def to_field(self):
+    def to_field(self, **kwargs):
         """
         Use ``RegexField`` for string setting if ``regex`` was filled in
         configuration definition file.
@@ -260,7 +268,7 @@ class StringSetting(Setting):
             if not 'regex' in self.field_args:
                 self.field_args = self.field_args + ('regex', )
             self.field_klass = forms.RegexField
-        return super(StringSetting, self).to_field()
+        return super(StringSetting, self).to_field(**kwargs)
 
 
 class SettingsContainer(object):
@@ -280,21 +288,25 @@ class SettingsContainer(object):
         setattr(self, value.name, value)
 
 
-def data_to_setting(data):
+def data_to_setting(data, additional_types=None):
     """
     Convert data dict to setting instance.
     """
+    additional_types = additional_types or []
     setting = None
     setting_type = data.get('type')
 
-    for value in globals().values():
+    all_values = globals().values() + additional_types
+
+    for value in all_values:
         try:
             if not issubclass(value, Setting):
                 continue
         except TypeError:
             continue
 
-        if not value.type or value.type != setting_type:
+        if not value.type or not setting_type or \
+           value.type.lower() != setting_type.lower():
             continue
 
         setting = value(**data)
@@ -304,6 +316,29 @@ def data_to_setting(data):
                                       setting_type)
 
     return setting
+
+
+def force_bool(value):
+    """
+    Convert string value to boolean instance.
+    """
+    if isinstance(value, (bool, int)):
+        return bool(value)
+
+    boolean_states = SafeConfigParser._boolean_states
+    if not value.lower() in boolean_states:
+        return None
+
+    return boolean_states[value.lower()]
+
+
+def load_from_path(path):
+    """
+    Load class or function from string path.
+    """
+    module, attr = path.rsplit('.', 1)
+    mod = importlib.import_module(module)
+    return getattr(mod, attr)
 
 
 def parse_config(path=None):
@@ -318,6 +353,18 @@ def parse_config(path=None):
 
     Also current function can called with ``path`` string.
     """
+    additional_types = getattr(django_settings, 'SETMAN_ADDITIONAL_TYPES', ())
+    additional_setting_types = []
+
+    for item in additional_types:
+        try:
+            additional_type = load_from_path(item)
+        except (AttributeError, TypeError):
+            logger.exception('Cannot load %r additional setting type from ' \
+                             'configuration.', item)
+
+        additional_setting_types.append(additional_type)
+
     if path is None:
         path = getattr(django_settings, 'SETMAN_SETTINGS_FILE', None)
 
@@ -326,32 +373,36 @@ def parse_config(path=None):
             dirname = os.path.dirname(os.path.normpath(module.__file__))
             path = os.path.join(dirname, DEFAULT_SETTINGS_FILENAME)
 
+    empty_settings = SettingsContainer(path)
+
     if not os.path.isfile(path):
         logger.error('Cannot read configuration definition file at %r. Exit ' \
                      'from parsing!', path)
-        return []
+        return empty_settings
 
-    config = ConfigParser()
+    # Use ``SortedDict`` instance for reading sections on config file instead
+    # of default ``dict`` that can shuffle the sections.
+    config = SafeConfigParser(dict_type=SortedDict)
 
     try:
         config.read(path)
     except ConfigParserError:
         logger.exception('Cannot parse configuration definition file from ' \
                          '%r', path)
-        return []
+        return empty_settings
 
-    settings = SettingsContainer(path)
+    settings = copy.deepcopy(empty_settings)
 
     for setting in config.sections():
         data = dict(config.items(setting))
         data.update({'name': setting})
 
         try:
-            setting = data_to_setting(data)
+            setting = data_to_setting(data, additional_setting_types)
         except SettingTypeDoesNotExist:
             logger.exception('Cannot find proper setting class for %r type',
                              data.get('type'))
-            return []
+            return empty_settings
 
         settings.append(setting)
 
