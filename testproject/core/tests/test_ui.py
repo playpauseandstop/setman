@@ -1,3 +1,5 @@
+import copy
+
 from decimal import Decimal
 
 from django.conf import settings as django_settings
@@ -5,7 +7,7 @@ from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
 from django.test import TestCase as DjangoTestCase
 
-from setman import settings
+from setman import get_version, settings
 from setman.models import Settings
 from setman.utils import AVAILABLE_SETTINGS
 
@@ -44,6 +46,7 @@ class TestCase(DjangoTestCase):
             'django.contrib.auth.backends.ModelBackend',
         )
 
+        self.docs_url = reverse('docs')
         self.edit_settings_url = reverse('setman_edit')
         self.home_url = reverse('home')
         self.revert_settings_url = reverse('setman_revert')
@@ -73,6 +76,19 @@ class TestCase(DjangoTestCase):
 
 class TestUI(TestCase):
 
+    def test_docs(self):
+        client = self.login(TEST_USERNAME)
+        response = client.get(self.docs_url, follow=True)
+
+        try:
+            self.assertContains(response, 'Documentation', count=2)
+        except AssertionError:
+            self.assertContains(
+                response,
+                'django-setman %s documentation' % get_version(),
+                count=4
+            )
+
     def test_edit_settings(self):
         client = self.login(TEST_USERNAME)
         response = client.get(self.edit_settings_url)
@@ -99,7 +115,7 @@ class TestUI(TestCase):
             old_value = getattr(settings, key)
 
             for value in values:
-                data = TEST_SETTINGS.copy()
+                data = copy.deepcopy(TEST_SETTINGS)
                 data.update({key: value})
 
                 response = client.post(self.edit_settings_url, data)

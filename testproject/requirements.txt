@@ -3,6 +3,7 @@ doit==0.10.0
 pep8==0.6.1
 python-odesk==0.1.3
 South==0.7.3
+Sphinx==1.1
 -e git+git://github.com/django-extensions/django-extensions.git#egg=django-extensions
 -e git+git://github.com/kmmbvnr/django-jenkins.git#egg=django-jenkins
 -e git+git://github.com/sergray/django-odesk.git#egg=django_odesk-0.0.3-sergray

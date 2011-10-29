@@ -11,6 +11,9 @@ settings = LazySettings()
 def get_version(version=None):
     """
     Return setman version number in human readable form.
+
+    You could call this function without args and in this case value from
+    ``setman.VERSION`` would be used.
     """
     version = version or VERSION
     if len(version) > 2 and version[2] is not None:

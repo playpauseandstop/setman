@@ -148,3 +148,7 @@ ul.messages .success {
     right: 0;
     top: 0;
 }
+
+.indent-top {
+    margin-top: 1em;
+}

@@ -1,5 +1,6 @@
 from decimal import Decimal
 
+from django.core.exceptions import ValidationError
 from django.test import TestCase
 
 from setman.models import Settings
@@ -47,11 +48,27 @@ class TestSettingsModel(TestCase):
             setattr(settings, key, value)
 
         settings.save()
+
         settings = Settings.objects.get()
+        old_create_date = settings.create_date
+        old_update_date = settings.update_date
 
         for key, value in TEST_SETTINGS.items():
             self.assertEqual(getattr(settings, key), value)
 
+        settings.save()
+        self.assertEqual(settings.create_date, old_create_date)
+        self.assertNotEqual(settings.update_date, old_update_date)
+
+        settings = Settings.objects.get()
+        self.assertEqual(settings.create_date, old_create_date)
+        self.assertNotEqual(settings.update_date, old_update_date)
+
     def test_unique(self):
         Settings.objects.create()
         self.assertRaises(Exception, Settings.objects.create)
+
+    def test_validation(self):
+        settings = Settings.objects.create(data=TEST_SETTINGS.copy())
+        settings.INT_SETTING = 12
+        self.assertRaises(ValidationError, settings.save)

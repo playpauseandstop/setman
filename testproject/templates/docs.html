@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{{ _("Documentation") }}{% endblock %}
+{% block content_title %}{{ _("Documentation") }}{% endblock %}
+{% block content %}
+
+    <p>{% blocktrans %}Looks like, the docs haven't built yet. To build the docs follow next instructions:{% endblocktrans %}</p>
+
+    <ul>
+        <li>
+            {{ _("Open Terminal and go to the project directory,") }}
+            <pre><code>$ cd {{ dirname }}</code></pre>
+        </li>
+        <li class="indent-top">
+            {{ _("Build HTML docs, with:") }}
+            <pre><code>$ make -C docs html</code></pre>
+        </li>
+    </ul>
+
+    <p>{% blocktrans %}After all done, refresh this page!{% endblocktrans %}</p>
+
+    <p>{% url home as home_url %}{% blocktrans %}Back to <a href="{{ home_url }}">home page</a>.{% endblocktrans %}</p>
+
+{% endblock %}
