@@ -14,7 +14,7 @@ from setman.utils import AVAILABLE_SETTINGS
 from testproject.core.tests.test_models import TEST_SETTINGS
 
 
-__all__ = ('TestUI', 'TestUIForbidden')
+__all__ = ('TestUI', 'TestUIForbidden', 'TestAdminUI', 'TestAdminUIForbidden')
 
 
 NEW_SETTINGS = {
@@ -205,3 +205,38 @@ class TestUIForbidden(TestCase):
         client = self.login(TEST_USERNAME)
         response = client.get(self.revert_settings_url)
         self.assertContains(response, 'Access Forbidden', status_code=403)
+
+
+class TestAdminUI(TestCase):
+
+    def setUp(self):
+        super(TestAdminUI, self).setUp()
+        self.admin_edit_url = reverse('admin:setman_settings_changelist')
+
+    def test_admin_settings_at_main_page(self):
+        client = self.login(TEST_USERNAME, is_admin=True)
+
+        response = client.get('/admin/')
+        self.assertContains(response, 'Settings')
+
+    def test_admin_settings(self):
+        client = self.login(TEST_USERNAME, is_admin=True)
+        response = client.get(self.admin_edit_url)
+        self.assertContains(response, 'Edit Settings')
+
+
+class TestAdminUIForbidden(TestCase):
+
+    def setUp(self):
+        super(TestAdminUIForbidden, self).setUp()
+        self.admin_edit_url = reverse('admin:setman_settings_changelist')
+
+    def test_admin_settings_not_in_main_page(self):
+        client = self.login(TEST_USERNAME)
+        response = client.get('/admin/')
+        self.assertNotContains(response, 'Settings')
+
+    def test_admin_settings_forbidden(self):
+        client = self.login(TEST_USERNAME)
+        response = client.get('/admin/setman/settings/')
+        self.assertNotContains(response, 'Edit Settings')
