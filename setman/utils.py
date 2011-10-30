@@ -16,7 +16,7 @@ from django.utils import importlib
 from django.utils.datastructures import SortedDict
 
 
-__all__ = ('AVAILABLE_SETTINGS', 'parse_config')
+__all__ = ('AVAILABLE_SETTINGS', 'auth_permitted', 'parse_config')
 
 
 DEFAULT_SETTINGS_FILENAME = 'settings.cfg'
@@ -314,6 +314,16 @@ class SettingsContainer(object):
     def append(self, value):
         self._data.append(value)
         setattr(self, value.name, value)
+
+
+def auth_permitted(user):
+    """
+    Check that the user can have access to the view.
+    """
+    default = lambda user: user.is_superuser
+    func = getattr(django_settings, 'SETMAN_AUTH_PERMITTED', default)
+    return func(user)
+
 
 
 def data_to_setting(data, additional_types=None):

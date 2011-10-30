@@ -1,8 +1,8 @@
 from random import randint
 
-from django.conf import settings as django_settings
 from django.contrib import messages
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.conf import settings as django_settings
 from django.core.urlresolvers import reverse
 from django.shortcuts import redirect, render
 from django.template import RequestContext
@@ -10,11 +10,11 @@ from django.utils.translation import ugettext as _
 
 from setman import settings
 from setman.forms import SettingsForm
-from setman.utils import AVAILABLE_SETTINGS
+from setman.utils import AVAILABLE_SETTINGS, auth_permitted
 
 
 @login_required
-def edit(request):
+def edit(request, template='setman/edit.html', title=None):
     """
     Edit Settings page.
 
@@ -35,12 +35,7 @@ def edit(request):
     But also, don't forget that only **logged** in users can access this page.
     Not guest users able to edit custom project settings in any way.
     """
-    permitted = getattr(django_settings, 'SETMAN_AUTH_PERMITTED', None)
-
-    if not permitted:
-        permitted = lambda user: user.is_superuser
-
-    if not permitted(request.user):
+    if not auth_permitted(request.user):
         return render(request,
                       'setman/edit.html',
                       {'auth_forbidden': True},
@@ -59,7 +54,7 @@ def edit(request):
     else:
         form = SettingsForm()
 
-    return render(request, 'setman/edit.html', {'form': form})
+    return render(request, template, {'form': form, 'title': title})
 
 
 @login_required
@@ -69,13 +64,9 @@ def revert(request):
 
     This view uses same permission rules as "Edit Settings" view.
     """
-    permitted = getattr(django_settings, 'SETMAN_AUTH_PERMITTED', None)
-    redirect_to = reverse('setman_edit')
+    redirect_to = request.GET.get('next', reverse('setman_edit'))
 
-    if not permitted:
-        permitted = lambda user: user.is_superuser
-
-    if not permitted(request.user):
+    if not auth_permitted(request.user):
         return render(request,
                       'setman/edit.html',
                       {'auth_forbidden': True},
@@ -90,4 +81,3 @@ def revert(request):
     )
 
     return redirect('%s?%d' % (redirect_to, randint(1000, 9999)))
-

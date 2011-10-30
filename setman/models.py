@@ -3,14 +3,30 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import signals
 from django.dispatch import receiver
+from django.utils.translation import ugettext as __, ugettext_lazy as _
 from django.utils.encoding import force_unicode
-from django.utils.translation import ugettext_lazy as _
 
 from setman.fields import SettingsField
 from setman.managers import CACHE_KEY, SettingsManager
 
 
 __all__ = ('Settings', )
+
+
+class app_label_title(str):
+    """
+    Simple fake for showing human readable values as app label in Django admin.
+    """
+    def __new__(cls, value, title):
+        instance = str.__new__(cls, value)
+        instance._title = title
+        return instance
+
+    def title(self):
+        return self._title
+
+    __copy__ = lambda self: self
+    __deepcopy__ = lambda self, *args: self
 
 
 class Settings(models.Model):
@@ -31,6 +47,7 @@ class Settings(models.Model):
     objects = SettingsManager()
 
     class Meta:
+        app_label = app_label_title('setman', __('Settings Manager'))
         verbose_name = _('settings')
         verbose_name_plural = _('settings')
 
@@ -55,7 +72,7 @@ class Settings(models.Model):
             return super(Settings, self).__setattr__(name, value)
 
     def __unicode__(self):
-        return force_unicode(_('Project settings'))
+        return __('Project settings')
 
     def validate_unique(self, exclude=None):
         """

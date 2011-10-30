@@ -194,7 +194,7 @@ SETMAN_ADDITIONAL_TYPES = (
     'testproject.core.utils.IPAddressSetting',
 )
 # Allow edit settings to any user
-SETMAN_AUTH_PERMITTED = lambda user: user
+SETMAN_AUTH_PERMITTED = lambda user: True
 
 # ===================
 # South configuration
