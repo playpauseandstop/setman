@@ -10,21 +10,11 @@ from django.utils.translation import ugettext as _
 
 from setman import settings
 from setman.forms import SettingsForm
-from setman.utils import AVAILABLE_SETTINGS
-
-
-def auth_permitted(user):
-    """
-    Check that the user have access.
-    """
-    auth_permitted_func = getattr(django_settings,
-        'SETMAN_AUTH_PERMITTED', lambda user: user.is_superuser)
-
-    return auth_permitted_func(user)
+from setman.utils import AVAILABLE_SETTINGS, auth_permitted
 
 
 @login_required
-def edit(request, template='setman/edit.html', is_admin=False):
+def edit(request, template='setman/edit.html', title=None):
     """
     Edit Settings page.
 
@@ -45,10 +35,6 @@ def edit(request, template='setman/edit.html', is_admin=False):
     But also, don't forget that only **logged** in users can access this page.
     Not guest users able to edit custom project settings in any way.
     """
-    #import ipdb; ipdb.set_trace()
-    if is_admin:
-        template = 'setman/admin/edit.html'
-
     if not auth_permitted(request.user):
         return render(request,
                       'setman/edit.html',
@@ -68,7 +54,7 @@ def edit(request, template='setman/edit.html', is_admin=False):
     else:
         form = SettingsForm()
 
-    return render(request, template, {'form': form})
+    return render(request, template, {'form': form, 'title': title})
 
 
 @login_required
@@ -78,7 +64,7 @@ def revert(request):
 
     This view uses same permission rules as "Edit Settings" view.
     """
-    redirect_to = request.GET.get('redirect_to', reverse('setman_edit'))
+    redirect_to = request.GET.get('next', reverse('setman_edit'))
 
     if not auth_permitted(request.user):
         return render(request,
