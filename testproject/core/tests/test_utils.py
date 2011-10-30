@@ -16,6 +16,13 @@ __all__ = ('TestUtils', )
 
 class TestUtils(TestCase):
 
+    def test_default_values(self):
+        settings = parse_config()
+        self.assertEqual(
+            settings.STRING_SETTING.default, 'String String String'
+        )
+        self.assertEqual(settings.VALIDATOR_SETTING.default, 'abc with xyz')
+
     def test_parse_config_default_path(self):
         settings = parse_config()
 
@@ -61,7 +68,7 @@ class TestUtils(TestCase):
         )
 
         setting = settings.STRING_SETTING
-        self.assertEqual(setting.default, 'Started with s')
+        self.assertEqual(setting.default, 'String String String')
         self.assertTrue(
             hasattr(setting, 'regex'), '%r has not regex attr' % setting
         )
