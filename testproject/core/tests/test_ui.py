@@ -14,7 +14,7 @@ from setman.utils import AVAILABLE_SETTINGS
 from testproject.core.tests.test_models import TEST_SETTINGS
 
 
-__all__ = ('TestUI', 'TestUIForbidden', 'TestAdminUI', 'TestAdminUIForbidden')
+__all__ = ('TestAdminUI', 'TestAdminUIForbidden', 'TestUI', 'TestUIForbidden')
 
 
 NEW_SETTINGS = {
@@ -81,18 +81,75 @@ class TestCase(DjangoTestCase):
         return client
 
 
-class TestUI(TestCase):
+class TestAdminUI(TestCase):
+
+    def setUp(self):
+        super(TestAdminUI, self).setUp()
+        self.add_url = reverse('admin:setman_settings_add')
+        self.admin_url = reverse('admin:index')
+        self.edit_url = reverse('admin:setman_settings_changelist')
 
     def test_admin(self):
-        response = self.client.get('/admin/')
-        self.assertNotContains(response, 'Setman')
+        relative = lambda url: url.replace(self.admin_url, '')
+
+        response = self.client.get(self.admin_url)
+        self.assertNotContains(response, 'Settings Manager')
         self.assertNotContains(response, 'Settings</a>')
 
         client = self.login(TEST_USERNAME, is_admin=True)
-        response = client.get('/admin/')
+        response = client.get(self.admin_url)
 
-        self.assertContains(response, 'Setman')
-        self.assertContains(response, 'Settings</a>')
+        self.assertContains(response, 'Settings Manager')
+        self.assertContains(
+            response, '<a href="%s">Settings</a>' % relative(self.edit_url)
+        )
+        self.assertNotContains(
+            response, '<a href="%s" class="addlink">Add</a>' % \
+            relative(self.add_url)
+        )
+        self.assertContains(
+            response,
+            '<a href="%s" class="changelink">Change</a>' % \
+            relative(self.edit_url)
+        )
+
+    def test_admin_edit(self):
+        client = self.login(TEST_USERNAME, is_admin=True)
+        response = client.get(self.edit_url)
+
+        for setting in AVAILABLE_SETTINGS:
+            self.assertContains(response, setting.label)
+            self.assertContains(response, setting.help_text)
+
+        response = client.post(self.edit_url, NEW_SETTINGS)
+        self.assertEqual(response.status_code, 302)
+        self.assertIn(self.edit_url, response['Location'])
+
+        settings._clear()
+
+        for key, value in NEW_SETTINGS.items():
+            self.assertEqual(getattr(settings, key), value)
+
+
+class TestAdminUIForbidden(TestCase):
+
+    def setUp(self):
+        super(TestAdminUIForbidden, self).setUp()
+        self.admin_url = reverse('admin:index')
+        self.old_SETMAN_AUTH_PERMITTED = settings.SETMAN_AUTH_PERMITTED
+        django_settings.SETMAN_AUTH_PERMITTED = lambda user: False
+
+    def tearDown(self):
+        django_settings.SETMAN_AUTH_PERMITTED = self.old_SETMAN_AUTH_PERMITTED
+
+    def test_admin(self):
+        client = self.login(TEST_USERNAME, is_admin=True)
+        response = client.get(self.admin_url)
+        self.assertNotContains(response, 'Settings Manager')
+        self.assertNotContains(response, 'Settings</a>')
+
+
+class TestUI(TestCase):
 
     def test_docs(self):
         client = self.login(TEST_USERNAME)
@@ -199,7 +256,12 @@ class TestUIForbidden(TestCase):
 
     def setUp(self):
         super(TestUIForbidden, self).setUp()
+
+        self.old_SETMAN_AUTH_PERMITTED = settings.SETMAN_AUTH_PERMITTED
         django_settings.SETMAN_AUTH_PERMITTED = lambda user: user.is_superuser
+
+    def tearDown(self):
+        django_settings.SETMAN_AUTH_PERMITTED = self.old_SETMAN_AUTH_PERMITTED
 
     def test_edit_settings_forbidden(self):
         client = self.login(TEST_USERNAME)
@@ -210,38 +272,3 @@ class TestUIForbidden(TestCase):
         client = self.login(TEST_USERNAME)
         response = client.get(self.revert_settings_url)
         self.assertContains(response, 'Access Forbidden', status_code=403)
-
-
-class TestAdminUI(TestCase):
-
-    def setUp(self):
-        super(TestAdminUI, self).setUp()
-        self.admin_edit_url = reverse('admin:setman_settings_changelist')
-
-    def test_admin_settings_at_main_page(self):
-        client = self.login(TEST_USERNAME, is_admin=True)
-
-        response = client.get('/admin/')
-        self.assertContains(response, 'Settings')
-
-    def test_admin_settings(self):
-        client = self.login(TEST_USERNAME, is_admin=True)
-        response = client.get(self.admin_edit_url)
-        self.assertContains(response, 'Edit Settings')
-
-
-class TestAdminUIForbidden(TestCase):
-
-    def setUp(self):
-        super(TestAdminUIForbidden, self).setUp()
-        self.admin_edit_url = reverse('admin:setman_settings_changelist')
-
-    def test_admin_settings_not_in_main_page(self):
-        client = self.login(TEST_USERNAME)
-        response = client.get('/admin/')
-        self.assertNotContains(response, 'Settings')
-
-    def test_admin_settings_forbidden(self):
-        client = self.login(TEST_USERNAME)
-        response = client.get('/admin/setman/settings/')
-        self.assertNotContains(response, 'Edit Settings')
