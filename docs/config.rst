@@ -234,3 +234,22 @@ will raise an error or show you error message in UI.
     In [3]: settings.save()
     ...
     ValidationError: {'data': [u'Specify valid test runner.']}
+
+Different default values for different environments
+===================================================
+
+Sometimes, we need to provide different default values for different
+environments. Saying, at production we need to use values from config
+definition file, when at staging we need to use different values.
+
+And rewriting all config definition file for staging isn't an answer, why we
+need two files, that not relate each other and indeed sometime later we'll
+miss to change necessary thing at one of these files.
+
+So, the answer is provide simple config file in next format::
+
+    SETTING_NAME = <default>
+
+and then setup ``SETMAN_DEFAULT_VALUES_FILE`` with path to it. Now,
+``django-setman`` would be use default values from this source instead of
+config definition file.

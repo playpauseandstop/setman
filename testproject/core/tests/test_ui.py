@@ -158,8 +158,8 @@ class TestUI(TestCase):
         )
         self.assertContains(
             response,
-            '<li><a href="%s">View configuration definition file</a></li>' % \
-            self.view_settings_url
+            '<li><a href="%s">View configuration definition and default ' \
+            'values files</a></li>' % self.view_settings_url
         )
 
     def test_home_not_authenticated(self):
@@ -186,8 +186,13 @@ class TestUI(TestCase):
         client = self.login(TEST_USERNAME)
         response = client.get(self.view_settings_url)
         self.assertContains(
-            response, 'Configuration Definition File', count=2
+            response, 'Configuration Definition and Default Values Files',
+            count=2
         )
+        self.assertContains(
+            response, 'Configuration Definition File', count=1
+        )
+        self.assertContains(response, 'Default Values File', count=3)
 
 
 class TestUIForbidden(TestCase):

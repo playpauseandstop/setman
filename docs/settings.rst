@@ -66,6 +66,15 @@ Couple of examples.
 
     SETMAN_AUTH_PERMITTED = lambda user: True
 
+SETMAN_DEFAULT_VALUES_FILE
+==========================
+
+By default, all default values read directly from config definition file, but
+if you need to provide different values for different environment setup
+path to the file with new default values, like::
+
+    SETMAN_DEFAULT_VALUES_FILE = os.path.join(DIRNAME, 'production.cfg')
+
 SETMAN_SETTINGS_FILE
 ====================
 

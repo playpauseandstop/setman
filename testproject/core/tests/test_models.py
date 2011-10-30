@@ -15,7 +15,7 @@ TEST_SETTINGS = {
     'DECIMAL_SETTING': Decimal('8.5'),
     'INT_SETTING': 24,
     'FLOAT_SETTING': 80.4,
-    'STRING_SETTING': 'Started with s',
+    'STRING_SETTING': 'String String String',
 }
 
 
