@@ -1,11 +1,12 @@
 {% extends "admin/base_site.html" %}
 {% load i18n admin_modify adminmedia %}
 
-{% block title %}{{ _("Edit Settings") }}{% endblock %}
-{% block content_title %}<h1>{{ _("Edit Settings") }}</h1>{% endblock %}
 {% block extrastyle %}{{ block.super }}<link rel="stylesheet" type="text/css" href="{% admin_media_prefix %}css/forms.css" />{% endblock %}
 
-{% block breadcrumbs %}<div class="breadcrumbs"><a href="/admin/">{% trans 'Home' %}</a>{% if title %} &rsaquo; {{ title }}{% endif %}</div>{% endblock %}
+{% block breadcrumbs %}<div class="breadcrumbs">
+    <a href="/admin/">{% trans 'Home' %}</a> &rsaquo;
+    {{ _("Settings Manager") }}
+</div>{% endblock %}
 
 {% block content %}
 
@@ -27,7 +28,7 @@
                 {% if f.errors %}
                     <ul class="errorlist">
                         {% for error in f.errors %}
-                            <li>{{ error }}</li>             
+                            <li>{{ error }}</li>
                         {% endfor %}
                     </ul>
                 {% endif %}
@@ -40,10 +41,10 @@
             {% endfor %}
         </fieldset>
 
-        <p class="buttons">
-            <button type="submit">{{ _("Submit") }}</button>
-            <button><a href="{% url setman_revert %}?redirect_to=/admin/setman/settings/" title="{{ _("Revert all settings to default values") }}">{{ _("Revert") }}</a></button>
-        </p>
+        <div class="submit-row">
+            <input class="default" type="submit" value="{{ _("Save") }}" />
+            <p class="deletelink-box"><a href="{% url setman_revert %}?next={% url admin:setman_settings_changelist %}" title="{{ _("Revert all settings to default values") }}">{{ _("Revert") }}</a></p>
+        </div>
     </form>
     {% endif %}
 
