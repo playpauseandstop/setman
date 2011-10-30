@@ -2,6 +2,11 @@ import copy
 import logging
 import os
 
+try:
+    from cStringIO import StringIO
+except ImportError:
+    from StringIO import StringIO
+
 from ConfigParser import Error as ConfigParserError, SafeConfigParser
 from decimal import Decimal
 
@@ -16,6 +21,29 @@ __all__ = ('AVAILABLE_SETTINGS', 'parse_config')
 
 DEFAULT_SETTINGS_FILENAME = 'settings.cfg'
 logger = logging.getLogger('setman')
+
+
+class ConfigParser(SafeConfigParser, object):
+    """
+    Customize default behavior for config parser instances to support config
+    files without sections at all.
+    """
+    no_sections_mode = False
+    optionxform = lambda _, value: value
+
+    def _read(self, fp, fpname):
+        """
+        If "No Sections Mode" enabled - add global section as first line of
+        file handler.
+        """
+        if self.no_sections_mode:
+            global_section = StringIO()
+            global_section.write('[DEFAULT]\n')
+            global_section.write(fp.read())
+            global_section.seek(0)
+            fp = global_section
+
+        return super(ConfigParser, self)._read(fp, fpname)
 
 
 class Setting(object):
@@ -325,7 +353,7 @@ def force_bool(value):
     if isinstance(value, (bool, int)):
         return bool(value)
 
-    boolean_states = SafeConfigParser._boolean_states
+    boolean_states = ConfigParser._boolean_states
     if not value.lower() in boolean_states:
         return None
 
@@ -355,6 +383,7 @@ def parse_config(path=None):
     """
     additional_types = getattr(django_settings, 'SETMAN_ADDITIONAL_TYPES', ())
     additional_setting_types = []
+    default_values = {}
 
     for item in additional_types:
         try:
@@ -382,8 +411,26 @@ def parse_config(path=None):
 
     # Use ``SortedDict`` instance for reading sections on config file instead
     # of default ``dict`` that can shuffle the sections.
-    config = SafeConfigParser(dict_type=SortedDict)
+    config = ConfigParser(dict_type=SortedDict)
 
+    # First we need to read default values file
+    default_values_file = \
+        getattr(django_settings, 'SETMAN_DEFAULT_VALUES_FILE', None)
+
+    if default_values_file:
+        config.no_sections_mode = True
+
+        try:
+            config.read(default_values_file)
+        except ConfigParserError:
+            logger.exception('Cannot read default values from %r',
+                             default_values_file)
+        else:
+            default_values = config.defaults()
+        finally:
+            config.no_sections_mode = False
+
+    # Only then really read from config definition file
     try:
         config.read(path)
     except ConfigParserError:
@@ -396,6 +443,9 @@ def parse_config(path=None):
     for setting in config.sections():
         data = dict(config.items(setting))
         data.update({'name': setting})
+
+        if setting in default_values:
+            data.update({'default': default_values[setting]})
 
         try:
             setting = data_to_setting(data, additional_setting_types)
