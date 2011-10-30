@@ -33,7 +33,7 @@
                     </ul>
                 {% endif %}
                     <div>
-                        <label for="id_email">{{ f.label }}</label>
+                        <label for="{{ f.auto_id }}">{{ f.label }}</label>
                         {{ f }}
                         {% if f.help_text %}<p class="help">{{ f.help_text }}</p>{% endif %}
                     </div>
