@@ -33,7 +33,18 @@ def view_settings(request):
     filename = AVAILABLE_SETTINGS.path
 
     handler = open(filename, 'rb')
-    content = handler.read()
+    settings_content = handler.read()
     handler.close()
 
-    return render(request, 'view_settings.html', {'content': content})
+    filename = getattr(django_settings, 'SETMAN_DEFAULT_VALUES_FILE', None)
+
+    if filename:
+        handler = open(filename, 'rb')
+        default_values_content = handler.read()
+        handler.close()
+    else:
+        default_values_content = None
+
+    context = {'default_values_content': default_values_content,
+               'settings_content': settings_content}
+    return render(request, 'view_settings.html', context)
