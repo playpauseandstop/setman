@@ -1,10 +1,19 @@
 {% extends "base.html" %}
 {% load i18n %}
-{% block title %}{{ _("Configuration Definition File") }}{% endblock %}
-{% block content_title %}{{ _("Configuration Definition File") }}{% endblock %}
+{% block title %}{{ _("Configuration Definition and Default Values Files") }}{% endblock %}
+{% block content_title %}{{ _("Configuration Definition and Default Values Files") }}{% endblock %}
 {% block content %}
 
-    <pre><code>{{ content }}</code></pre>
+    <h3>{{ _("Configuration Definition File") }}</h3>
+    <pre class="indent-top"><code>{{ settings_content }}</code></pre>
+
+    <h3 class="indent-top">{{ _("Default Values File") }}</h3>
+    {% if default_values_content %}
+    <pre class="indent-top"><code>{{ default_values_content }}</code></pre>
+    {% else %}
+    <p class="indent-top"><em>{{ _("No default values file was specified in settings.") }}</em></p>
+    {% endif %}
+
     <p>{% url home as home_url %}{% blocktrans %}Back to <a href="{{ home_url }}">home page</a>.{% endblocktrans %}</p>
 
 {% endblock %}
