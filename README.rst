@@ -27,7 +27,7 @@ Or::
 Also, you can retrieve fresh version of ``setman`` from `GitHub
 <https://github.com/odeskps/sprint-configuration>`_::
 
-    $ git clone git://github.com/odeskps/sprint-configuration.git
+    $ git clone git://github.com/odeskps/django-setman.git
 
 and place ``setman`` directory somewhere to ``PYTHONPATH`` (or ``sys.path``).
 
@@ -45,6 +45,5 @@ See full documentation at ``docs/`` directory.
 Bugs, feature requests?
 =======================
 
-If you found some bug in ``setman`` reusable app, please, add new issue on
-project's `Redmine
-<https://redmine.odeskps.com/projects/osprint-configuration>`_.
+If you found some bug in ``setman`` reusable app, please, add new issue to the
+project's `GitHub issues <https://github.com/odeskps/django-setman/issues>`_.
