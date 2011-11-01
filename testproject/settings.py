@@ -179,6 +179,12 @@ ODESK_SUPERUSERS = ODESK_ADMINS
 # -------------------------------------------------------------
 ODESK_AUTH_TEAMS = (
     'odesk:odeskps',
+    'odesk:odeskpsbootcamp',
+    'odesk:odeskpsinternal',
+    'odeskfraudpreven:mqodeskpsdev',
+    'odesk:odeskrnd',
+    'google:tools',
+    'google:toolsbootcamp',
 )
 
 # Empty tuples to prevent ``AttributeError`` on backend's ``authenticate``
