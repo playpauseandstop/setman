@@ -19,8 +19,9 @@ setup(
     version=version,
     description='Django settings manager. Another.',
     long_description=README,
-    author='Igor Davydenko',
-    author_email='playpauseandstop@gmail.com',
+    author='oDesk',
+    maintainer='Igor Davydenko',
+    maintainer_email='playpauseandstop@gmail.com',
     url='https://github.com/odeskps/django-setman',
     packages=[
         'setman',
