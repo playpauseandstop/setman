@@ -192,4 +192,4 @@ team) at the oDesk Sprint 2011.
 The library licensed under the BSD License.
 
 Source code available at `GitHub
-<https://github.com/odeskps/sprint-configuration>`_.
+<https://github.com/odeskps/django-setman>`_.

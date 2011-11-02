@@ -25,7 +25,7 @@ Or::
     $ python setup.py install
 
 Also, you can retrieve fresh version of ``setman`` from `GitHub
-<https://github.com/odeskps/sprint-configuration>`_::
+<https://github.com/odeskps/django-setman>`_::
 
     $ git clone git://github.com/odeskps/django-setman.git
 
