@@ -85,7 +85,7 @@ parsed and if all ok store settings to database with default values.
 
 ::
 
-    $ python manage.py setman
+    $ python manage.py setman_cmd -d
 
 On new projects
 ===============
