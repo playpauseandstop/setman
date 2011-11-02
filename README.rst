@@ -35,7 +35,7 @@ License
 =======
 
 ``django-setman`` is licensed under the `BSD License
-<https://github.com/odeskps/sprint-configuration/blob/master/LICENSE>`_.
+<https://github.com/odeskps/django-setman/blob/master/LICENSE>`_.
 
 Usage. More information
 =======================

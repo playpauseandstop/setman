@@ -21,7 +21,7 @@ setup(
     long_description=README,
     author='Igor Davydenko',
     author_email='playpauseandstop@gmail.com',
-    url='https://github.com/odeskps/sprint-configuration',
+    url='https://github.com/odeskps/django-setman',
     packages=[
         'setman',
         'setman.migrations',
