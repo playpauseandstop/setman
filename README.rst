@@ -40,7 +40,8 @@ License
 Usage. More information
 =======================
 
-See full documentation at ``docs/`` directory.
+See full documentation at ``docs/`` directory or browse online `here
+<http://packages.python.org/django-setman/>`_.
 
 Bugs, feature requests?
 =======================
