@@ -4,7 +4,7 @@ from setman.lazy import LazySettings
 __all__ = ('get_version', 'settings')
 
 
-VERSION = (0, 1, 'alpha')
+VERSION = (0, 1, 'beta')
 settings = LazySettings()
 
 
