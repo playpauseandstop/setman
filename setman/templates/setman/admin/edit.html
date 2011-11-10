@@ -43,7 +43,7 @@
 
         <div class="submit-row">
             <input class="default" type="submit" value="{{ _("Save") }}" />
-            <p class="deletelink-box"><a href="{% url setman_revert %}?next={% url admin:setman_settings_changelist %}" title="{{ _("Revert all settings to default values") }}">{{ _("Revert") }}</a></p>
+            <p class="deletelink-box"><a href="{% url admin:setman_settings_revert %}?next={% url admin:setman_settings_changelist %}" title="{{ _("Revert all settings to default values") }}">{{ _("Revert") }}</a></p>
         </div>
     </form>
     {% endif %}
