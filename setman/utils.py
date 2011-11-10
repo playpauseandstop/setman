@@ -1,6 +1,7 @@
 import copy
 import logging
 import os
+import re
 
 try:
     from cStringIO import StringIO
@@ -12,6 +13,7 @@ from decimal import Decimal
 
 from django import forms
 from django.conf import settings as django_settings
+from django.db.models.loading import get_model
 from django.utils import importlib
 from django.utils.datastructures import SortedDict
 
@@ -197,16 +199,84 @@ class ChoiceSetting(Setting):
         self.choices = self.build_choices(self.choices)
 
     def build_choices(self, value):
-        return tuple(map(lambda s: s.strip(), value.split(',')))
+        """
+        Convert string value to valid choices tuple.
 
-    def to_field(self, **kwargs):
-        old_choices = self.choices
-        self.choices = [(choice, choice) for choice in old_choices]
+        **Supported formats:**
 
-        field = super(ChoiceSetting, self).to_field(**kwargs)
-        self.choices = old_choices
+        * a, b, c
+        * (a, A), (b, B), (c, C)
+        * a { b, c }, d { e, f }
+        * A { (b, B), (c, C) }, D { (e, E), (f, F) }
+        * path.to.CHOICES
+        * path.to.Model.CHOICES
+        * app.Model.CHOICES
 
-        return field
+        """
+        # Start parsing with internal choices
+        if not ',' in value and '.' in value:
+            # Choices tuple should be last part of value
+            path, attr = value.rsplit('.', 1)
+
+            # Try to process path as ``app.Model`` definition
+            model = None
+
+            try:
+                app, model = path.split('.')
+            except ValueError:
+                pass
+            else:
+                model = get_model(app, model)
+
+            # If cannot process path as ``app.Model`` just load it as module
+            # or as class from module
+            if model is None:
+                try:
+                    module = importlib.import_module(path)
+                except ImportError:
+                    try:
+                        module = load_from_path(path)
+                    except (AttributeError, ImportError):
+                        logger.exception('Cannot load choices from %r path',
+                                         value)
+                        return ()
+            else:
+                module = model
+
+            # And finally, try to get choices attr in module or model
+            try:
+                choices = getattr(module, attr)
+            except AttributeError:
+                logger.exception('Cannot load choices from %r path', value)
+                return ()
+        elif not '{' in value and not '}' in value:
+            # Parse choice with labels
+            label_re = re.compile(r'\(([^,]+),\s+([^\)]+)\)', re.M)
+            found = label_re.findall(value)
+
+            if found:
+                choices = found
+            # If nothing found by regex, just split value by comma and
+            # duplicate resulted items
+            else:
+                choices = map(lambda item: (item.strip(), item.strip()),
+                              value.split(','))
+        else:
+            # Parse groups
+            groups_re = re.compile(r'([^{]+){([^}]+)},?', re.M)
+            found = groups_re.findall(value)
+
+            if found:
+                choices = []
+
+                for group, data in found:
+                    group = group.strip()
+                    choices.append((group, self.build_choices(data.strip())))
+            else:
+                logger.error('Cannot parse choices from %r', value)
+                return ()
+
+        return tuple(choices)
 
 
 class DecimalSetting(Setting):
