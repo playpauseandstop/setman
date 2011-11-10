@@ -42,6 +42,3 @@ Setting
 
 .. autoclass:: setman.utils.Setting
    :members:
-
-ADDITIONAL_SETTINGS
--------------------
