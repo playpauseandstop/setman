@@ -81,7 +81,9 @@ class Setting(object):
     validators = None
 
     def __init__(self, **kwargs):
-        restricted = ('field_klass', 'field_args', 'field_kwargs')
+        self._validators = kwargs.pop('validators', None)
+        restricted = ('field_klass', 'field_args', 'field_kwargs',
+                      'validators')
 
         for key, _ in kwargs.items():
             if not hasattr(self, key):
@@ -92,7 +94,6 @@ class Setting(object):
 
         self.__dict__.update(kwargs)
         self.required = force_bool(self.required)
-        self.validators = self._parse_validators(self.validators)
 
     def __repr__(self):
         return u'<%s: %s>' % (self.__class__.__name__, self.__unicode__())
@@ -134,6 +135,16 @@ class Setting(object):
         same value without any conversion.
         """
         return value
+
+    @property
+    def validators(self):
+        """
+        Lazy loaded validators.
+        """
+        cache_key = '_validators_cache'
+        if not hasattr(self, cache_key):
+            setattr(self, cache_key, self._parse_validators(self._validators))
+        return getattr(self, cache_key)
 
     def _parse_validators(self, value):
         """
@@ -195,10 +206,20 @@ class ChoiceSetting(Setting):
     type = 'choice'
 
     def __init__(self, **kwargs):
+        self._choices = kwargs.pop('choices', None)
         super(ChoiceSetting, self).__init__(**kwargs)
-        self.choices = self.build_choices(self.choices)
 
-    def build_choices(self, value):
+    @property
+    def choices(self):
+        """
+        Lazy loaded choices.
+        """
+        cache_key = '_choices_cache'
+        if not hasattr(self, cache_key):
+            setattr(self, cache_key, self._parse_choices(self._choices))
+        return getattr(self, cache_key)
+
+    def _parse_choices(self, value):
         """
         Convert string value to valid choices tuple.
 
@@ -271,7 +292,7 @@ class ChoiceSetting(Setting):
 
                 for group, data in found:
                     group = group.strip()
-                    choices.append((group, self.build_choices(data.strip())))
+                    choices.append((group, self._parse_choices(data.strip())))
             else:
                 logger.error('Cannot parse choices from %r', value)
                 return ()

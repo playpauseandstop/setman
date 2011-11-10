@@ -135,6 +135,10 @@ String choice setting. Need to have additional argument:
       choices = testproject.core.models.UserProfile.ROLE_CHOICES
       choices = core.UserProfile.ROLE_CHOICES
 
+  .. note:: Don't worry these choices would be loaded only when setting needs
+     to be converted to form field (in UI or before validation), so you don't
+     need to care about import ordering.
+
 In UI would be converted to ``django.forms.ChoiceField`` required field.
 
 Decimal
@@ -228,6 +232,10 @@ For example,
 So, on parsing ``django-setman`` tries to load ``test_runner_validator`` from
 ``testproject.core.validators`` module and if not fail silently (but leaves
 a message to logs).
+
+.. note:: Don't worry these validators would be loaded only when setting needs
+   to be converted to form field (in UI or before validation), so you don't
+   need to care about import ordering.
 
 The ``test_runner_validator`` should be an easy function, that raises
 ``django.core.exceptions.ValidationError`` if value isn't proper, e.g.::
