@@ -21,6 +21,7 @@ ADMIN_MEDIA_PREFIX = '/admin-media/'
 # -----------------------
 # Authentication settings
 # -----------------------
+AUTH_PROFILE_MODULE = 'core.UserProfile'
 AUTHENTICATION_BACKENDS = ('django_odesk.auth.backends.TeamAuthBackend', )
 
 # --------------

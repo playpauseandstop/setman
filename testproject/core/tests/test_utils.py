@@ -26,7 +26,7 @@ class TestUtils(TestCase):
     def test_parse_config_default_path(self):
         settings = parse_config()
 
-        self.assertEqual(len(settings), 8)
+        self.assertEqual(len(settings), 14)
         self.assertEqual(settings.path,
                          os.path.join(django_settings.DIRNAME, 'settings.cfg'))
 
@@ -38,7 +38,9 @@ class TestUtils(TestCase):
         setting = settings.CHOICE_SETTING
         self.assertEqual(setting.default, 'pear')
         self.assertEqual(
-            setting.choices, ('apple', 'grape', 'peach', 'pear', 'waterlemon')
+            setting.choices,
+            (('apple', 'apple'), ('grape', 'grape'), ('peach', 'peach'),
+             ('pear', 'pear'), ('waterlemon', 'waterlemon'))
         )
         self.assertIsNotNone(setting.label)
         self.assertIsNotNone(setting.help_text)
