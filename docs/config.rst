@@ -116,7 +116,24 @@ String choice setting. Need to have additional argument:
 
 * **choices**
 
-  A comma-seprated list of available choices to use.
+  A comma-seprated list of available choices to use. In very common case, you
+  may just be enough with it. But you also may provide choices in more advanced
+  way.
+
+  For example, if you need labels use next format::
+
+      choices = (key, Value), (another_key, Another Value)
+
+  And if you need groups::
+
+      choices = Group { (key, Value) }, Another Group { (another_key, Another Value) }
+
+  And finally, you can just provide Python path where list or tuple with
+  choices located, like::
+
+      choices = testproject.core.choices.ROLE_CHOICES
+      choices = testproject.core.models.UserProfile.ROLE_CHOICES
+      choices = core.UserProfile.ROLE_CHOICES
 
 In UI would be converted to ``django.forms.ChoiceField`` required field.
 
