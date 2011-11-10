@@ -64,7 +64,10 @@ def revert(request):
 
     This view uses same permission rules as "Edit Settings" view.
     """
-    redirect_to = request.GET.get('next', reverse('setman_edit'))
+    redirect_to = request.GET.get('next')
+
+    if not redirect_to:
+        redirect_to = reverse('setman_edit')
 
     if not auth_permitted(request.user):
         return render(request,

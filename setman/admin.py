@@ -28,6 +28,21 @@ class SettingsAdmin(admin.ModelAdmin):
         """
         return edit(request, 'setman/admin/edit.html', self.app_label)
 
+    def get_urls(self):
+        """
+        Add support of "Revert" to Django admin panel. This needs to use all
+        functional of "Edit Settings" page without including ``setman.urls``
+        patterns into root URLConf module.
+        """
+        from django.conf.urls.defaults import patterns, url
+
+        urlpatterns = patterns('setman.views',
+            url(r'^revert/$', 'revert', name='setman_settings_revert'),
+        )
+        urlpatterns += super(SettingsAdmin, self).get_urls()
+
+        return urlpatterns
+
     def has_add_permission(self, request):
         """
         Do not show "Add" link in admin panel for "Settings" line in
