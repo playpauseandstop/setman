@@ -4,6 +4,7 @@ from django.test import TestCase
 from setman.forms import SettingsForm
 from setman.utils import AVAILABLE_SETTINGS
 
+from testproject.core.choices import ROLE_CHOICES
 from testproject.core.validators import abc_validator, xyz_validator
 
 
@@ -29,9 +30,72 @@ class TestForms(TestCase):
 
     def test_choice(self):
         field = self.form.fields['CHOICE_SETTING']
-        choices = AVAILABLE_SETTINGS.CHOICE_SETTING.choices
-        self.assertEqual(field.choices, [(item, item) for item in choices])
+        self.assertEqual(
+            field.choices,
+            [('apple', 'apple'), ('grape', 'grape'), ('peach', 'peach'),
+             ('pear', 'pear'), ('waterlemon', 'waterlemon')]
+        )
         self.assertEqual(field.label, 'Choice')
+
+        field = self.form.fields['CHOICE_SETTING_WITH_LABELS']
+        self.assertEqual(
+            field.choices,
+            [('apple', 'Apple'), ('grape', 'Grape'), ('peach', 'Peach'),
+             ('pear', 'Pear'), ('waterlemon', 'Waterlemon')]
+        )
+        self.assertEqual(field.label, 'Choice with labels')
+
+        field = self.form.fields['CHOICE_SETTING_WITH_GROUPS']
+        self.assertEqual(
+            field.choices,
+            [
+                ('Male', (
+                    ('Henry', 'Henry'),
+                    ('John', 'John'),
+                    ('Peter', 'Peter'),
+                )),
+                ('Female', (
+                    ('Henrietta', 'Henrietta'),
+                    ('Johanna', 'Johanna'),
+                    ('Kate', 'Kate')
+                )),
+            ]
+        )
+        self.assertEqual(field.label, 'Choice with groups')
+
+        field = self.form.fields['CHOICE_SETTING_WITH_LABELS_AND_GROUPS']
+        self.assertEqual(
+            field.choices,
+            [
+                ('Fruits', (
+                    ('apple', 'Apple'),
+                    ('grape', 'Grape'),
+                    ('peach', 'Peach'),
+                    ('pear', 'Pear')
+                )),
+                ('Vegetables', (
+                    ('carrot', 'Carrot'),
+                    ('cucumber', 'Cucumber'),
+                    ('potato', 'Potato'),
+                    ('tomato', 'Tomato'),
+                )),
+            ]
+        )
+        self.assertEqual(field.label, 'Choice with labels and groups')
+
+        field = self.form.fields['CHOICE_SETTING_WITH_INTERNAL_CHOICES']
+        self.assertEqual(field.choices, list(ROLE_CHOICES))
+        self.assertEqual(field.label, 'Choice with internal choices')
+
+        field = \
+            self.form.fields['CHOICE_SETTING_WITH_INTERNAL_MODEL_CHOICES_1']
+        self.assertEqual(field.choices, list(ROLE_CHOICES))
+        self.assertEqual(field.label, 'Choice with internal model choices')
+
+        field = \
+            self.form.fields['CHOICE_SETTING_WITH_INTERNAL_MODEL_CHOICES_2']
+        self.assertEqual(field.choices, list(ROLE_CHOICES))
+        self.assertEqual(field.label, 'Choice with internal model choices')
 
     def test_decimal(self):
         field = self.form.fields['DECIMAL_SETTING']
@@ -58,7 +122,11 @@ class TestForms(TestCase):
         self.assertEqual(len(form.fields), len(AVAILABLE_SETTINGS))
 
         for name, field in form.fields.items():
-            self.assertIsInstance(field, SETTINGS_FIELDS[name])
+            if not name in SETTINGS_FIELDS and name.startswith('CHOICE_'):
+                result = forms.ChoiceField
+            else:
+                result = SETTINGS_FIELDS[name]
+            self.assertIsInstance(field, result)
 
     def test_regex(self):
         field = self.form.fields['STRING_SETTING']

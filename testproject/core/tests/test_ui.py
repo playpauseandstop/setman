@@ -20,6 +20,12 @@ __all__ = ('TestAdminUI', 'TestAdminUIForbidden', 'TestUI', 'TestUIForbidden')
 NEW_SETTINGS = {
     'BOOLEAN_SETTING': True,
     'CHOICE_SETTING': 'waterlemon',
+    'CHOICE_SETTING_WITH_LABELS': 'waterlemon',
+    'CHOICE_SETTING_WITH_GROUPS': 'Kate',
+    'CHOICE_SETTING_WITH_LABELS_AND_GROUPS': 'grape',
+    'CHOICE_SETTING_WITH_INTERNAL_CHOICES': 'editor',
+    'CHOICE_SETTING_WITH_INTERNAL_MODEL_CHOICES_1': 'senior_editor',
+    'CHOICE_SETTING_WITH_INTERNAL_MODEL_CHOICES_2': 'senior_editor',
     'DECIMAL_SETTING': Decimal('5.33'),
     'INT_SETTING': 20,
     'IP_SETTING': '192.168.1.2',
@@ -30,6 +36,12 @@ NEW_SETTINGS = {
 TEST_USERNAME = 'username'
 WRONG_SETTINGS = {
     'CHOICE_SETTING': ('pepper', ),
+    'CHOICE_SETTING_WITH_LABELS': ('pepper', ),
+    'CHOICE_SETTING_WITH_GROUPS': ('Michael', ),
+    'CHOICE_SETTING_WITH_LABELS_AND_GROUPS': ('pepper', ),
+    'CHOICE_SETTING_WITH_INTERNAL_CHOICES': ('admin', ),
+    'CHOICE_SETTING_WITH_INTERNAL_MODEL_CHOICES_1': ('admin', ),
+    'CHOICE_SETTING_WITH_INTERNAL_MODEL_CHOICES_2': ('admin', ),
     'DECIMAL_SETTING': (Decimal(-1), Decimal(12), Decimal('8.3451')),
     'INT_SETTING': (12, 48),
     'IP_SETTING': ('127.0.0', ),
