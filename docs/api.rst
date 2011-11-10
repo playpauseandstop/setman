@@ -19,6 +19,12 @@ settings
    :members:
    :private-members:
 
+setman.helpers
+==============
+
+.. automodule:: setman.helpers
+   :members:
+
 setman.models
 =============
 
