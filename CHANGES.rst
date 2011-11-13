@@ -5,6 +5,7 @@ django-setman Changes
 0.2 (current)
 -------------
 
++ Return default value for setting even it not stored to database.
 + Lazy process ``validators`` and ``choices`` setting attributes, don't care
   about import ordering.
 + Added labels support for ``choices`` value in ``ChoiceSetting``.
