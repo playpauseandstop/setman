@@ -1,11 +1,12 @@
 from django.conf import settings as django_settings
+from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.test import TestCase
 
 from setman import settings
 from setman.models import Settings
 
-from test_models import TEST_SETTINGS
+from testproject.core.tests.test_models import TEST_SETTINGS
 
 
 __all__ = ('TestGlobalSettings', )
@@ -13,8 +14,19 @@ __all__ = ('TestGlobalSettings', )
 
 class TestGlobalSettings(TestCase):
 
-    def tearDown(self):
+    def setUp(self):
         settings._clear()
+        cache.clear()
+
+    def tearDown(self):
+        self.setUp()
+
+    def test_default_values(self):
+        self.assertEqual(Settings.objects.count(), 0)
+
+        for name, value in TEST_SETTINGS.items():
+            self.assertTrue(hasattr(settings, name))
+            self.assertEqual(getattr(settings, name), value)
 
     def test_empty_settings(self):
         for name in dir(django_settings):
