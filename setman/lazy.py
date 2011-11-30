@@ -1,7 +1,7 @@
 from django.conf import settings as django_settings
 
 from setman.models import Settings
-from setman.utils import AVAILABLE_SETTINGS
+from setman.utils import AVAILABLE_SETTINGS, is_settings_container
 
 
 __all__ = ('LazySettings', )
@@ -12,7 +12,24 @@ class LazySettings(object):
     Simple proxy object that accessed database only when user needs to read
     some setting.
     """
-    _custom = None
+    __slots__ = ('_custom_cache', '_settings', '_parent', '_prefix')
+
+    def __init__(self, settings=None, prefix=None, parent=None):
+        """
+        Initialize lazy settings instance.
+        """
+        self._settings = settings or AVAILABLE_SETTINGS
+        self._parent = parent
+        self._prefix = prefix
+
+    def __delattr__(self, name):
+        if name.startswith('_'):
+            return super(LazySettings, self).__delattr__(name)
+
+        if hasattr(django_settings, name):
+            delattr(django_settings, name)
+        else:
+            delattr(self._custom, name)
 
     def __getattr__(self, name):
         """
@@ -25,46 +42,90 @@ class LazySettings(object):
         if name.startswith('_'):
             return super(LazySettings, self).__getattr__(name)
 
-        if self._custom is None:
-            self._custom = self._get_custom_settings()
+        data, prefix = self._custom.data, self._prefix
 
-        # Read setting from database
-        if name in self._custom.data:
-            return self._custom.data.get(name)
+        # Read app setting from database
+        if prefix and prefix in data and name in data[prefix]:
+            return data[prefix][name]
+        # Read project setting from database
+        elif name in data and not isinstance(data[name], dict):
+            return data[name]
         # Or from Django settings
         elif hasattr(django_settings, name):
             return getattr(django_settings, name)
         # Or read default value from available settings
-        elif hasattr(AVAILABLE_SETTINGS, name):
-            return getattr(AVAILABLE_SETTINGS, name).default
+        elif hasattr(self._settings, name):
+            mixed = getattr(self._settings, name)
+
+            if is_settings_container(mixed):
+                return LazySettings(mixed, name, self)
+
+            return mixed.default
 
         # If cannot read setting - raise error
         raise AttributeError('Settings has not attribute %r' % name)
 
     def __setattr__(self, name, value):
+        """
+        Add support of setting values to settings as instance attribute.
+        """
         if name.startswith('_'):
             return super(LazySettings, self).__setattr__(name, value)
 
+        # First of all try to setup value to Django setting
         if hasattr(django_settings, name):
             setattr(django_settings, name, value)
-        else:
-            if self._custom is None:
-                self._custom = self._get_custom_settings()
+        # Then setup value to project setting
+        elif not self._prefix:
             setattr(self._custom, name, value)
+        # And finally setup value to app setting
+        else:
+            data, prefix = self._custom.data, self._prefix
+
+            if not prefix in data:
+                data[prefix] = {}
+
+            data[prefix].update({name: value})
+
+    def revert(self):
+        """
+        Revert settings to default values.
+        """
+        self._custom.revert()
 
     def save(self):
         """
         Save customized settings to the database.
         """
-        if self._custom is None:
-            self._custom = self._get_custom_settings()
         self._custom.save()
 
     def _clear(self):
-        self._custom = None
+        """
+        Clear custom settings cache.
+        """
+        if hasattr(self, '_custom_cache'):
+            delattr(self, '_custom_cache')
+
+    @property
+    def _custom(self):
+        if self._parent:
+            return self._parent._custom
+
+        if not hasattr(self, '_custom_cache'):
+            setattr(self, '_custom_cache', self._get_custom_settings())
+
+        return getattr(self, '_custom_cache')
 
     def _get_custom_settings(self):
+        """
+        Do not read any settings before post_syncdb signal is called.
+        """
         try:
             return Settings.objects.get()
         except Settings.DoesNotExist:
             return Settings.objects.create(data={})
+
+    def _get_name(self, name):
+        """
+        Get setting name while trying to prepend preifx value if possible.
+        """
