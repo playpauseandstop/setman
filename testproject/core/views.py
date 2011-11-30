@@ -3,8 +3,9 @@ import os
 from django.conf import settings as django_settings
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect, render
+from django.utils.datastructures import SortedDict
 
-from setman.utils import AVAILABLE_SETTINGS
+from setman.utils import AVAILABLE_SETTINGS, is_settings_container
 
 
 @login_required
@@ -30,11 +31,17 @@ def view_settings(request):
 
     Only logged in users can have access to this page.
     """
-    filename = AVAILABLE_SETTINGS.path
-
-    handler = open(filename, 'rb')
-    settings_content = handler.read()
+    handler = open(AVAILABLE_SETTINGS.path, 'rb')
+    project_settings_content = handler.read()
     handler.close()
+
+    apps_settings_contents = SortedDict()
+
+    for setting in AVAILABLE_SETTINGS:
+        if is_settings_container(setting):
+            handler = open(setting.path, 'rb')
+            apps_settings_contents[setting.app_name] = handler.read()
+            handler.close()
 
     filename = getattr(django_settings, 'SETMAN_DEFAULT_VALUES_FILE', None)
 
@@ -45,6 +52,7 @@ def view_settings(request):
     else:
         default_values_content = None
 
-    context = {'default_values_content': default_values_content,
-               'settings_content': settings_content}
+    context = {'apps_settings_contents': apps_settings_contents,
+               'default_values_content': default_values_content,
+               'project_settings_content': project_settings_content}
     return render(request, 'view_settings.html', context)
