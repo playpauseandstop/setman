@@ -2,6 +2,20 @@
 {% load i18n admin_modify adminmedia %}
 
 {% block extrastyle %}{{ block.super }}<link rel="stylesheet" type="text/css" href="{% admin_media_prefix %}css/forms.css" />{% endblock %}
+{% block extrahead %}
+    {{ block.super }}
+    <script src="{% admin_media_prefix %}js/jquery.min.js" type="text/javascript"></script>
+    <script type="text/javascript"><!--
+        $(document).ready(function() {
+            $("fieldset").each(function(i) {
+                var $this = $(this);
+                if (!$.trim($this.text())) {
+                    $this.hide();
+                }
+            });
+        });
+    --></script>
+{% endblock %}
 
 {% block breadcrumbs %}<div class="breadcrumbs">
     <a href="/admin/">{% trans 'Home' %}</a> &rsaquo;
@@ -22,23 +36,27 @@
         {% endif %}
 
         <fieldset class="module aligned">
-            {% for f in form %}
-                <div class="form-row {% if f.errors %}errors{% endif %}">
+        {% for f in form %}
+            {% ifchanged f.field.app_name %}
+            </fieldset>
+            <fieldset class="module aligned"><h2>{% with app_name=f.field.app_name|default:_("Project") %}{% blocktrans %}{{ app_name }} settings{% endblocktrans %}{% endwith %}</h2>
+            {% endifchanged %}
+            <div class="form-row {% if f.errors %}errors{% endif %}">
 
-                {% if f.errors %}
-                    <ul class="errorlist">
-                        {% for error in f.errors %}
-                            <li>{{ error }}</li>
-                        {% endfor %}
-                    </ul>
-                {% endif %}
-                    <div>
-                        <label for="{{ f.auto_id }}">{{ f.label }}</label>
-                        {{ f }}
-                        {% if f.help_text %}<p class="help">{{ f.help_text }}</p>{% endif %}
-                    </div>
+            {% if f.errors %}
+                <ul class="errorlist">
+                    {% for error in f.errors %}
+                        <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+                <div>
+                    <label for="{{ f.auto_id }}">{{ f.label }}</label>
+                    {{ f }}
+                    {% if f.help_text %}<p class="help">{{ f.help_text }}</p>{% endif %}
                 </div>
-            {% endfor %}
+            </div>
+        {% endfor %}
         </fieldset>
 
         <div class="submit-row">
