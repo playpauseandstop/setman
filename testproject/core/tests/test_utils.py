@@ -5,7 +5,7 @@ from decimal import Decimal
 from django.conf import settings as django_settings
 from django.test import TestCase
 
-from setman.utils import parse_config
+from setman.utils import parse_config, parse_configs
 
 from testproject.core.validators import abc_validator, test_runner_validator, \
     xyz_validator
@@ -16,17 +16,26 @@ __all__ = ('TestUtils', )
 
 class TestUtils(TestCase):
 
-    def test_default_values(self):
-        settings = parse_config()
-        self.assertEqual(
-            settings.STRING_SETTING.default, 'String String String'
-        )
-        self.assertEqual(settings.VALIDATOR_SETTING.default, 'abc with xyz')
+    def test_parse_config_path(self):
+        def check(path):
+            settings = parse_config(path)
+            self.assertEqual(len(settings), 1)
 
-    def test_parse_config_default_path(self):
-        settings = parse_config()
+            self.assertEqual(
+                settings.TEST_RUNNER.default, 'django.test.simple.TestRunner'
+            )
+            self.assertEqual(settings.TEST_RUNNER.type, 'string')
+            self.assertEqual(
+                settings.TEST_RUNNER.validators, [test_runner_validator]
+            )
 
-        self.assertEqual(len(settings), 14)
+        check('test_settings.cfg')
+        check(os.path.join(django_settings.DIRNAME, 'test_settings.cfg'))
+
+    def test_parse_configs_default_path(self):
+        settings = parse_configs()
+
+        self.assertEqual(len(settings), 15)
         self.assertEqual(settings.path,
                          os.path.join(django_settings.DIRNAME, 'settings.cfg'))
 
@@ -78,29 +87,15 @@ class TestUtils(TestCase):
         self.assertIsNotNone(setting.label)
         self.assertIsNotNone(setting.help_text)
 
-    def test_parse_config_additional_type(self):
-        settings = parse_config()
+    def test_parse_configs_additional_type(self):
+        settings = parse_configs()
 
         setting = settings.IP_SETTING
         self.assertEqual(setting.type, 'ip')
         self.assertEqual(setting.default, '127.0.0.1')
 
-    def test_parse_config_path(self):
-        path = os.path.join(django_settings.DIRNAME, 'test_settings.cfg')
-
-        settings = parse_config(path)
-        self.assertEqual(len(settings), 1)
-
-        self.assertEqual(
-            settings.TEST_RUNNER.default, 'django.test.simple.TestRunner'
-        )
-        self.assertEqual(settings.TEST_RUNNER.type, 'string')
-        self.assertEqual(
-            settings.TEST_RUNNER.validators, [test_runner_validator]
-        )
-
-    def test_parse_config_validators(self):
-        settings = parse_config()
+    def test_parse_configs_validators(self):
+        settings = parse_configs()
 
         setting = settings.BOOLEAN_SETTING
         self.assertEqual(setting.validators, [])

@@ -19,6 +19,10 @@ TEST_SETTINGS = {
     'CHOICE_SETTING_WITH_INTERNAL_MODEL_CHOICES_1': 'writer',
     'CHOICE_SETTING_WITH_INTERNAL_MODEL_CHOICES_2': 'writer',
     'CHOICE_SETTING': 'pear',
+    'core': {
+        'app_setting': None,
+        'setting_to_redefine': 0,
+    },
     'DECIMAL_SETTING': Decimal('8.5'),
     'INT_SETTING': 24,
     'FLOAT_SETTING': 80.4,
