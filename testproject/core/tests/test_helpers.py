@@ -17,11 +17,28 @@ class TestHelpers(TestCase):
 
     def test_get_config(self):
         for key, value in TEST_SETTINGS.items():
+            if key == 'core':
+                continue
             self.assertEqual(get_config(key), value)
+
+        self.assertRaises(ValueError, get_config, 'core')
+
+        for key, value in TEST_SETTINGS['core'].items():
+            self.assertEqual(get_config('core.%s' % key), value)
+
+    def test_get_config_app_does_not_found(self):
+        self.assertRaises(AttributeError, get_config, 'auth')
+        self.assertRaises(AttributeError, get_config, 'auth.DOES_NOT_EXIST')
+        self.assertRaises(AttributeError,
+                          get_config,
+                          'auth.DOES_NOT_EXIST',
+                          True)
 
     def test_get_config_default_value(self):
         self.assertTrue(get_config('DOES_NOT_EXIST', True))
         self.assertRaises(AttributeError, get_config, 'DOES_NOT_EXIST')
+        self.assertTrue(get_config('core.DOES_NOT_EXIST', True))
+        self.assertRaises(AttributeError, get_config, 'core.DOES_NOT_EXIST')
 
     def test_get_config_django_settings(self):
         self.assertEqual(get_config('DEBUG'), django_settings.DEBUG)

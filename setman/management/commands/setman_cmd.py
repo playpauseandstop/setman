@@ -11,7 +11,7 @@ from optparse import make_option
 from django.core.management.base import NoArgsCommand
 
 from setman.models import Settings
-from setman.utils import AVAILABLE_SETTINGS
+from setman.utils import AVAILABLE_SETTINGS, is_settings_container
 
 
 DEFAULT_ACTION = 'check_setman'
@@ -34,12 +34,27 @@ class Command(NoArgsCommand):
         Check setman configuration.
         """
         if verbosity:
+            print >> self.stdout, 'Project settings:'
             print >> self.stdout, 'Configuration definition file placed at ' \
-                                  '%r' % AVAILABLE_SETTINGS.path
-            print >> self.stdout, 'Available settings are:\n'
+                                  '%r\n' % AVAILABLE_SETTINGS.path
 
             for setting in AVAILABLE_SETTINGS:
-                print >> self.stdout, '    %r' % setting
+                indent = ' ' * 4
+
+                if is_settings_container(setting):
+                    print >> self.stdout, '%s%r settings:' % \
+                                          (indent, setting.app_name)
+                    print >> self.stdout, '%sConfiguration definition file ' \
+                                          'placed at %r' % \
+                                          (indent, setting.path)
+                    indent *= 2
+
+                    for subsetting in setting:
+                        print >> self.stdout, '%s%r' % (indent, subsetting)
+
+                    print >> self.stdout
+                else:
+                    print >> self.stdout, '%s%r' % (indent, setting)
 
             print >> self.stdout, ''
 
@@ -59,6 +74,22 @@ class Command(NoArgsCommand):
         """
         Store default values to Settings instance.
         """
+        def store_values(settings, available_settings=None, prefix=None):
+            available_settings = available_settings or AVAILABLE_SETTINGS
+
+            for setting in available_settings:
+                if is_settings_container(setting):
+                    store_values(settings, setting, setting.app_name)
+                elif not prefix:
+                    setattr(settings, setting.name, setting.default)
+                else:
+                    data = settings.data
+
+                    if not prefix in data:
+                        data[prefix] = {}
+
+                    data[prefix][setting.name] = setting.default
+
         try:
             settings = Settings.objects.get()
         except Settings.DoesNotExist:
@@ -69,9 +100,8 @@ class Command(NoArgsCommand):
             if verbosity:
                 print >> self.stdout, 'Settings instance already exist.'
 
-        for setting in AVAILABLE_SETTINGS:
-            setattr(settings, setting.name, setting.default)
-
+        store_values(settings)
         settings.save()
+
         if verbosity:
             print >> self.stdout, 'Default values stored well!'

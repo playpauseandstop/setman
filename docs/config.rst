@@ -278,3 +278,69 @@ So, the answer is provide simple config file in next format::
 and then setup ``SETMAN_DEFAULT_VALUES_FILE`` with path to it. Now,
 ``django-setman`` would be use default values from this source instead of
 config definition file.
+
+Configuration definiton file for the app
+========================================
+
+.. note:: New in 0.3 release.
+
+The main idea of giving ability to use app configuration definition files
+alongside with global (project) configuration definition files is support of
+configuring reusable apps with ``setman``.
+
+So, if we have ``giggling`` app and want to customize its settings via
+``setman`` UI and then read these settings with ``setman.settings`` instance
+we need to do next steps:
+
+1. Provide ``settings.cfg`` file in ``giggling`` app directory.
+2. Add ``giggling`` app to the ``INSTALLED_APPS`` list (and add empty
+   ``models.py`` module if app hasn't it yet, cause we load all apps via
+   ``django.db.models.loading.get_apps`` method and anyway you'll need
+   ``models.py`` module even empty to test your app ;) )
+3. Enable ``setman``. That's all.
+
+Now, if configuration definition file for ``giggling`` app is::
+
+    [GIGGLE_IN]
+    type = int
+    default = 60
+    label = Giggle in
+    help_text = Giggle one time per x seconds.
+    min_value = 0
+
+    [GIGGLE_PROVIDER]
+    type = string
+    default = giggling.GiggleProvider
+    label = Giggle provider
+    help_text = Which class would be used for giggling. Should be an ancestor
+                of giggling.BaseGiggleProvider class.
+    validators = giggling.validators.validate_giggle_provider
+
+You should access to these settings as::
+
+    from setman import settings
+
+    from giggling import load_provider
+
+    def giggle(request):
+        giggle_in = settings.giggling.GIGGLE_IN
+        giggle_provider = load_provider(settings.giggling.GIGGLE_PROVIDER)
+        ...
+
+And what if you need to customize some giggle things in some project, saying
+change default value of ``GIGGLE_IN`` setting and setup more enhanced validator
+to the ``GIGGLE_PROVIDER`` setting? It's easy, in project configuration
+definition file you'll need to do something next::
+
+    ...
+    [giggling.GIGGLE_IN]
+    default = 30
+
+    [giggling.GIGGLE_PROVIDER]
+    validators = project.core.validators.super_validate_giggle_provider
+
+And now ``setman`` use values of these attributes for giggling settings.
+
+.. important:: You can redefine each available setting attribute except
+   ``type``. Setting type is stable value and can setup only one time in app
+   configuration definition file.

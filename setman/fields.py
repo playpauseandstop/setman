@@ -4,7 +4,7 @@ from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
 from django.utils import simplejson
 
-from setman.utils import AVAILABLE_SETTINGS
+from setman.utils import AVAILABLE_SETTINGS, is_settings_container
 
 
 __all__ = ('SettingsField', )
@@ -33,18 +33,23 @@ class SettingsField(models.TextField):
         self.encoder_cls = kwargs.pop('encoder_cls', DjangoJSONEncoder)
         super(SettingsField, self).__init__(*args, **kwargs)
 
-    def clean(self, value, instance):
+    def clean(self, value, instance, settings=None):
         """
         Run validation for each setting value.
         """
         data = {} if not value else value
+        settings = settings or AVAILABLE_SETTINGS
 
         for name, value in data.items():
-            if not hasattr(AVAILABLE_SETTINGS, name):
+            if not hasattr(settings, name):
                 continue
 
-            setting = getattr(AVAILABLE_SETTINGS, name)
-            data[name] = setting.to_field(initial=value).clean(value)
+            mixed = getattr(settings, name)
+
+            if is_settings_container(mixed):
+                data[name] = self.clean(value, instance, mixed)
+            else:
+                data[name] = mixed.to_field(initial=value).clean(value)
 
         return data
 
@@ -84,10 +89,19 @@ class SettingsField(models.TextField):
             # string saved to SettingsField.
             return value
 
+        return self._settings_to_python(data)
+
+    def _settings_to_python(self, data, settings=None):
+        settings = settings or AVAILABLE_SETTINGS
+
         for key, value in data.items():
-            if hasattr(AVAILABLE_SETTINGS, key):
-                setting = getattr(AVAILABLE_SETTINGS, key)
-                data[key] = setting.to_python(value)
+            if hasattr(settings, key):
+                mixed = getattr(settings, key)
+
+                if is_settings_container(mixed):
+                    data[key] = self._settings_to_python(value, mixed)
+                else:
+                    data[key] = mixed.to_python(value)
 
         return data
 

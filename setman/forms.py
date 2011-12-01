@@ -1,7 +1,8 @@
 from django import forms
+from django.utils.datastructures import SortedDict
 
 from setman import settings
-from setman.utils import AVAILABLE_SETTINGS
+from setman.utils import AVAILABLE_SETTINGS, is_settings_container
 
 
 class SettingsForm(forms.Form):
@@ -14,9 +15,30 @@ class SettingsForm(forms.Form):
         add field for each setting to the form.
         """
         super(SettingsForm, self).__init__(*args, **kwargs)
+        self.fields = self.build_fields()
 
-        for setting in AVAILABLE_SETTINGS:
-            self.fields[setting.name] = setting.to_field()
+    def build_fields(self, settings=None, fields=None):
+        """
+        Build only fields from list of availabale settings.
+        """
+        fields = fields or SortedDict()
+        settings = settings or AVAILABLE_SETTINGS
+
+        for setting in settings:
+            if is_settings_container(setting):
+                fields = self.build_fields(setting, fields)
+            else:
+                field = setting.to_field()
+                field.app_name = setting.app_name
+
+                if setting.app_name:
+                    name = '.'.join((setting.app_name, setting.name))
+                else:
+                    name = setting.name
+
+                fields[name] = field
+
+        return fields
 
     def save(self):
         """
@@ -25,6 +47,10 @@ class SettingsForm(forms.Form):
         cd = self.cleaned_data
 
         for key, value in cd.items():
-            setattr(settings, key, value)
+            if '.' in key:
+                app_name, key = key.split('.', 1)
+                setattr(getattr(settings, app_name), key, value)
+            else:
+                setattr(settings, key, value)
 
         settings.save()

@@ -9,7 +9,7 @@ from django.test import TestCase as DjangoTestCase
 
 from setman import get_version, settings
 from setman.models import Settings
-from setman.utils import AVAILABLE_SETTINGS
+from setman.utils import AVAILABLE_SETTINGS, is_settings_container
 
 from testproject.core.tests.test_models import TEST_SETTINGS
 
@@ -26,6 +26,10 @@ NEW_SETTINGS = {
     'CHOICE_SETTING_WITH_INTERNAL_CHOICES': 'editor',
     'CHOICE_SETTING_WITH_INTERNAL_MODEL_CHOICES_1': 'senior_editor',
     'CHOICE_SETTING_WITH_INTERNAL_MODEL_CHOICES_2': 'senior_editor',
+    'core': {
+        'app_setting': 'someone',
+        'setting_to_redefine': 24,
+    },
     'DECIMAL_SETTING': Decimal('5.33'),
     'INT_SETTING': 20,
     'IP_SETTING': '192.168.1.2',
@@ -42,6 +46,10 @@ WRONG_SETTINGS = {
     'CHOICE_SETTING_WITH_INTERNAL_CHOICES': ('admin', ),
     'CHOICE_SETTING_WITH_INTERNAL_MODEL_CHOICES_1': ('admin', ),
     'CHOICE_SETTING_WITH_INTERNAL_MODEL_CHOICES_2': ('admin', ),
+    'core': {
+        'app_setting': ('something', ),
+        'setting_to_redefine': (72, ),
+    },
     'DECIMAL_SETTING': (Decimal(-1), Decimal(12), Decimal('8.3451')),
     'INT_SETTING': (12, 48),
     'IP_SETTING': ('127.0.0', ),
@@ -71,6 +79,25 @@ class TestCase(DjangoTestCase):
             self.old_AUTHENTICATION_BACKENDS
         settings._clear()
 
+    def check_labels(self, response, settings=None):
+        settings = settings or AVAILABLE_SETTINGS
+
+        for setting in settings:
+            if is_settings_container(setting):
+                self.check_labels(response, setting)
+            else:
+                self.assertContains(response, setting.label)
+                self.assertContains(response, setting.help_text)
+
+    def check_values(self, settings, data):
+        for name, value in data.items():
+            mixed = getattr(settings, name)
+
+            if is_settings_container(mixed):
+                self.check_values(mixed, data.get(name))
+            else:
+                self.assertEqual(mixed, value)
+
     def login(self, username, is_admin=False):
         try:
             user = User.objects.get(username=username)
@@ -92,6 +119,19 @@ class TestCase(DjangoTestCase):
 
         return client
 
+    def to_post_data(self, data, prefix=None):
+        data = copy.deepcopy(data)
+        post_data = {}
+
+        for key, value in data.items():
+            if isinstance(value, dict):
+                post_data.update(self.to_post_data(value, key))
+            else:
+                if prefix:
+                    key = '.'.join((prefix, key))
+                post_data.update({key: value})
+
+        return post_data
 
 class TestAdminUI(TestCase):
 
@@ -128,19 +168,14 @@ class TestAdminUI(TestCase):
     def test_admin_edit(self):
         client = self.login(TEST_USERNAME, is_admin=True)
         response = client.get(self.edit_url)
+        self.check_labels(response)
 
-        for setting in AVAILABLE_SETTINGS:
-            self.assertContains(response, setting.label)
-            self.assertContains(response, setting.help_text)
-
-        response = client.post(self.edit_url, NEW_SETTINGS)
+        response = client.post(self.edit_url, self.to_post_data(NEW_SETTINGS))
         self.assertEqual(response.status_code, 302)
         self.assertIn(self.edit_url, response['Location'])
 
         settings._clear()
-
-        for key, value in NEW_SETTINGS.items():
-            self.assertEqual(getattr(settings, key), value)
+        self.check_values(settings, NEW_SETTINGS)
 
 
 class TestAdminUIForbidden(TestCase):
@@ -181,19 +216,15 @@ class TestUI(TestCase):
         response = client.get(self.edit_settings_url)
 
         self.assertContains(response, 'Edit Settings', count=2)
+        self.check_labels(response)
 
-        for setting in AVAILABLE_SETTINGS:
-            self.assertContains(response, setting.label)
-            self.assertContains(response, setting.help_text)
-
-        response = client.post(self.edit_settings_url, NEW_SETTINGS)
+        data = self.to_post_data(NEW_SETTINGS)
+        response = client.post(self.edit_settings_url, data)
         self.assertEqual(response.status_code, 302)
         self.assertIn(self.edit_settings_url, response['Location'])
 
         settings._clear()
-
-        for key, value in NEW_SETTINGS.items():
-            self.assertEqual(getattr(settings, key), value)
+        self.check_values(settings, NEW_SETTINGS)
 
     def test_edit_settings_errors(self):
         client = self.login(TEST_USERNAME)
@@ -214,7 +245,13 @@ class TestUI(TestCase):
                 self.assertContains(response, '<dd class="errors">')
 
                 settings._clear()
-                self.assertEqual(getattr(settings, key), old_value)
+
+                if is_settings_container(old_value):
+                    new_value = getattr(settings, key)
+                    self.assertTrue(is_settings_container(new_value))
+                    self.assertEqual(old_value._prefix, new_value._prefix)
+                else:
+                    self.assertEqual(getattr(settings, key), old_value)
 
     def test_home(self):
         client = self.login(TEST_USERNAME)
@@ -248,8 +285,7 @@ class TestUI(TestCase):
         self.assertEquals(response.status_code, 302)
         self.assertIn(self.edit_settings_url, response['Location'])
 
-        for key, value in TEST_SETTINGS.items():
-            self.assertEqual(getattr(settings, key), value)
+        self.check_values(settings, TEST_SETTINGS)
 
     def test_view_settings(self):
         client = self.login(TEST_USERNAME)
@@ -259,8 +295,15 @@ class TestUI(TestCase):
             count=2
         )
         self.assertContains(
-            response, 'Configuration Definition File', count=1
+            response, 'Configuration Definition File', count=2
         )
+        self.assertContains(
+            response, 'Project Configuration Definition File', count=1
+        )
+        self.assertContains(
+            response, 'Apps Configuration Definition Files', count=1
+        )
+        self.assertContains(response, 'App: core', count=1)
         self.assertContains(response, 'Default Values File', count=3)
 
 

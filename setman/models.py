@@ -8,6 +8,7 @@ from django.utils.encoding import force_unicode
 
 from setman.fields import SettingsField
 from setman.managers import CACHE_KEY, SettingsManager
+from setman.utils import AVAILABLE_SETTINGS, is_settings_container
 
 
 __all__ = ('Settings', )
@@ -52,27 +53,56 @@ class Settings(models.Model):
         verbose_name_plural = _('settings')
 
     def __delattr__(self, name):
-        if name.isupper():
-            if name in self.data:
-                del self.data[name]
-        else:
-            super(Settings, self).__delattr__(name)
+        if not self.is_setting_name(name):
+            return super(Settings, self).__delattr__(name)
+
+        if name in self.data:
+            del self.data[name]
 
     def __getattr__(self, name):
-        if name.isupper():
-            return self.data.get(name)
-        return super(Settings, self).__getattr__(name)
+        if not self.is_setting_name(name):
+            return super(Settings, self).__getattr__(name)
+
+        return self.data.get(name)
 
     def __setattr__(self, name, value):
-        if name.isupper():
-            if not self.data:
-                self.data = {}
-            self.data[name] = value
-        else:
+        if not self.is_setting_name(name):
             return super(Settings, self).__setattr__(name, value)
+
+        if not self.data:
+            self.data = {}
+        self.data[name] = value
 
     def __unicode__(self):
         return __('Project settings')
+
+    def is_setting_name(self, name):
+        """
+        Is name a valid setting name or not?
+        """
+        possible_names = ('create_date', 'data', 'id', 'objects', 'pk',
+                          'update_date')
+        return not name.startswith('_') and not name in possible_names
+
+    def revert(self, app_name=None):
+        """
+        Revert all stored settings to default values.
+        """
+        data = self.data.get(app_name, {}) if app_name else self.data
+        values = getattr(AVAILABLE_SETTINGS, app_name) if app_name \
+                                                       else AVAILABLE_SETTINGS
+
+        for name, value in data.items():
+            mixed = getattr(values, name, None)
+
+            # Pass if ``name`` isn't on available settings values
+            if mixed is None:
+                continue
+
+            if is_settings_container(mixed):
+                self.revert(name)
+            else:
+                data[name] = mixed.default
 
     def validate_unique(self, exclude=None):
         """

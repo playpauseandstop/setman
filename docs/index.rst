@@ -111,6 +111,9 @@ global project settings.
 Configuration Definition File
 -----------------------------
 
+Project configuration
+~~~~~~~~~~~~~~~~~~~~~
+
 Okay, we hope that right now, all seems clear for you. But maybe, you've
 already interested how some settings being custom project settings. The answer
 is with help of *configuration definition file*.
@@ -134,12 +137,52 @@ And, don't worry if you haven't ``settings.cfg`` and you've already installed
 logger. And don't raise any errors when configuration definition file doesn't
 exist or cannot parse.
 
+App configuration
+~~~~~~~~~~~~~~~~~
+
+But, what to do if you want to add some predefined settings to your reusable
+app and add ability of further users to change them? It's no problem at all
+too, cause we have support for app settings as well as project settings.
+
+But with some restrictions. First of all, on naming. By default, it's good to
+have all configuration definition files named as ``settings.cfg``, but what to
+do if you already have customized ``SETMAN_SETTINGS_FILE``? The answer is
+starting to use ``SETMAN_SETTINGS_FILES``, which should be a simple key-value
+tuple, list or dict where key is short app name, used by Django and value is
+path to settings file. If this path isn't absolute we relate it with app
+directory as do for the project settings file as well.
+
+Next, all attributes for app settings (except ``type``) should be updated in
+project settings, in next way:
+
+**app/settings.cfg**
+
+::
+
+    [SETTING_NAME]
+    type = (boolean|choice|decimal|float|int|string)
+    default = <default>
+    label = Setting
+
+**settings.cfg**
+
+::
+
+    [app.SETTING_NAME]
+    default = <new_default>
+    label = New Setting
+    validators = project.app.validators.setting_validator
+
 UI
 --
 
 And the main feature of ``setman`` is simple UI for editing all custom project
 settings. It could be well configured for use with project styles or with
 standard Django admin styles.
+
+The most easy solution is use Django admin for editting settings, in that case
+you don't need to change anything in your project, just include ``admin.urls``
+at your root URLConf module. :doc:`And that's all </admin>`.
 
 For enabling UI, you'll need to include setman urls in your root URLConf
 module::

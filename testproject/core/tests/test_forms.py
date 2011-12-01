@@ -14,6 +14,8 @@ __all__ = ('TestForms', )
 SETTINGS_FIELDS = {
     'BOOLEAN_SETTING': forms.BooleanField,
     'CHOICE_SETTING': forms.ChoiceField,
+    'core.app_setting': forms.CharField,
+    'core.setting_to_redefine': forms.IntegerField,
     'DECIMAL_SETTING': forms.DecimalField,
     'FLOAT_SETTING': forms.FloatField,
     'INT_SETTING': forms.IntegerField,
@@ -119,7 +121,9 @@ class TestForms(TestCase):
 
     def test_field(self):
         form = self.form
-        self.assertEqual(len(form.fields), len(AVAILABLE_SETTINGS))
+        settings_counter = len(AVAILABLE_SETTINGS) - 1 + \
+                           len(AVAILABLE_SETTINGS.core)
+        self.assertEqual(len(form.fields), settings_counter)
 
         for name, field in form.fields.items():
             if not name in SETTINGS_FIELDS and name.startswith('CHOICE_'):

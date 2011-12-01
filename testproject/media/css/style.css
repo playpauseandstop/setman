@@ -149,6 +149,10 @@ ul.messages .success {
     top: 0;
 }
 
+.indent-bottom {
+    margin-bottom: 1em;
+}
+
 .indent-top {
     margin-top: 1em;
 }

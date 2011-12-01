@@ -1,7 +1,7 @@
 from random import randint
 
 from django.contrib import messages
-from django.contrib.auth.decorators import login_required, user_passes_test
+from django.contrib.auth.decorators import login_required
 from django.conf import settings as django_settings
 from django.core.urlresolvers import reverse
 from django.shortcuts import redirect, render
@@ -10,7 +10,8 @@ from django.utils.translation import ugettext as _
 
 from setman import settings
 from setman.forms import SettingsForm
-from setman.utils import AVAILABLE_SETTINGS, auth_permitted
+from setman.utils import AVAILABLE_SETTINGS, auth_permitted, \
+    is_settings_container
 
 
 @login_required
@@ -75,10 +76,9 @@ def revert(request):
                       {'auth_forbidden': True},
                       status=403)
 
-    for setting in AVAILABLE_SETTINGS:
-        setattr(settings, setting.name, setting.default)
-
+    settings.revert()
     settings.save()
+
     messages.success(
         request, _('Settings have been reverted to default values.')
     )

@@ -19,6 +19,11 @@
 
         <dl class="fields">
         {% for f in form %}
+        {% ifchanged f.field.app_name %}
+        </dl>
+        <h2 class="indent-top">{% with app_name=f.field.app_name|default:_("Project") %}{% blocktrans %}{{ app_name }} settings{% endblocktrans %}{% endwith %}</h2>
+        <dl class="fields">
+        {% endifchanged %}
             <dt><label for="{{ f.auto_id }}">{{ f.label }}</label></dt>
             <dd class="field">{{ f }}</dd>
             {% if f.errors %}<dd class="errors">{{ f.errors|join:" " }}</dd>{% endif %}

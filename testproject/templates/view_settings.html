@@ -4,8 +4,16 @@
 {% block content_title %}{{ _("Configuration Definition and Default Values Files") }}{% endblock %}
 {% block content %}
 
-    <h3>{{ _("Configuration Definition File") }}</h3>
-    <pre class="indent-top"><code>{{ settings_content }}</code></pre>
+    <h3>{{ _("Project Configuration Definition File") }}</h3>
+    <pre class="indent-top"><code>{{ project_settings_content }}</code></pre>
+
+    <h3 class="indent-top">{{ _("Apps Configuration Definition Files") }}</h3>
+    {% for key,value in apps_settings_contents.items %}
+    <h3 class="indent-top">{% blocktrans %}App: {{ key }}{% endblocktrans %}</h3>
+    <pre class="indent-top">{{ value }}</pre>
+    {% empty %}
+    <p class="indent-top"><em>{{ _("No apps configuration definiton files was found.") }}</em></p>
+    {% endfor %}
 
     <h3 class="indent-top">{{ _("Default Values File") }}</h3>
     {% if default_values_content %}

@@ -13,7 +13,7 @@ from decimal import Decimal
 
 from django import forms
 from django.conf import settings as django_settings
-from django.db.models.loading import get_model
+from django.db.models.loading import get_apps, get_model
 from django.utils import importlib
 from django.utils.datastructures import SortedDict
 
@@ -69,6 +69,7 @@ class Setting(object):
     The last three attributes can be provided only in Python module, when all
     other attrs can read from configuration definition file.
     """
+    app_name = None
     default = None
     field_args = ('label', 'help_text', 'initial', 'required', 'validators')
     field_klass = None
@@ -81,19 +82,11 @@ class Setting(object):
     validators = None
 
     def __init__(self, **kwargs):
-        self._validators = kwargs.pop('validators', None)
-        restricted = ('field_klass', 'field_args', 'field_kwargs',
-                      'validators')
-
-        for key, _ in kwargs.items():
-            if not hasattr(self, key):
-                kwargs.pop(key)
-
-            if key in restricted:
-                kwargs.pop(key)
-
-        self.__dict__.update(kwargs)
-        self.required = force_bool(self.required)
+        """
+        Initialize setting.
+        """
+        self.app_name = kwargs.pop('app_name', None)
+        self.update(**kwargs)
 
     def __repr__(self):
         return u'<%s: %s>' % (self.__class__.__name__, self.__unicode__())
@@ -108,6 +101,10 @@ class Setting(object):
         default setting value.
         """
         from setman import settings
+
+        if self.app_name:
+            settings = getattr(settings, self.app_name)
+
         return getattr(settings, self.name, self.default)
 
     def to_field(self, **kwargs):
@@ -135,6 +132,24 @@ class Setting(object):
         same value without any conversion.
         """
         return value
+
+    def update(self, **kwargs):
+        """
+        Update attributes for current setting instance.
+        """
+        self._validators = kwargs.pop('validators', None)
+        restricted = ('field_klass', 'field_args', 'field_kwargs',
+                      'validators')
+
+        for key, _ in kwargs.items():
+            if not hasattr(self, key):
+                kwargs.pop(key)
+
+            if key in restricted:
+                kwargs.pop(key)
+
+        self.__dict__.update(kwargs)
+        self.required = force_bool(self.required)
 
     @property
     def validators(self):
@@ -185,15 +200,15 @@ class BooleanSetting(Setting):
     required = False
     type = 'boolean'
 
-    def __init__(self, **kwargs):
-        super(BooleanSetting, self).__init__(**kwargs)
-        self.default = self.to_python(self.default)
-
     def to_python(self, value):
         """
         Convert string to the boolean type.
         """
         return force_bool(value)
+
+    def update(self, **kwargs):
+        super(BooleanSetting, self).update(**kwargs)
+        self.default = self.to_python(self.default)
 
 
 class ChoiceSetting(Setting):
@@ -204,10 +219,6 @@ class ChoiceSetting(Setting):
     field_args = Setting.field_args + ('choices', )
     field_klass = forms.ChoiceField
     type = 'choice'
-
-    def __init__(self, **kwargs):
-        self._choices = kwargs.pop('choices', None)
-        super(ChoiceSetting, self).__init__(**kwargs)
 
     @property
     def choices(self):
@@ -299,6 +310,10 @@ class ChoiceSetting(Setting):
 
         return tuple(choices)
 
+    def update(self, **kwargs):
+        self._choices = kwargs.pop('choices', None)
+        super(ChoiceSetting, self).update(**kwargs)
+
 
 class DecimalSetting(Setting):
     """
@@ -313,8 +328,13 @@ class DecimalSetting(Setting):
     min_value = None
     type = 'decimal'
 
-    def __init__(self, **kwargs):
-        super(DecimalSetting, self).__init__(**kwargs)
+    def to_python(self, value):
+        if value is None:
+            return value
+        return Decimal(str(value))
+
+    def update(self, **kwargs):
+        super(DecimalSetting, self).update(**kwargs)
 
         int_setting = IntSetting()
         self.decimal_places = int_setting.to_python(self.decimal_places)
@@ -323,11 +343,6 @@ class DecimalSetting(Setting):
         self.default = self.to_python(self.default)
         self.max_value = self.to_python(self.max_value)
         self.min_value = self.to_python(self.min_value)
-
-    def to_python(self, value):
-        if value is None:
-            return value
-        return Decimal(str(value))
 
 
 class IntSetting(Setting):
@@ -340,17 +355,17 @@ class IntSetting(Setting):
     min_value = None
     type = 'int'
 
-    def __init__(self, **kwargs):
-        super(IntSetting, self).__init__(**kwargs)
-        self.default = self.to_python(self.default)
-        self.max_value = self.to_python(self.max_value)
-        self.min_value = self.to_python(self.min_value)
-
     def to_python(self, value):
         try:
             return int(value)
         except (TypeError, ValueError):
             return None
+
+    def update(self, **kwargs):
+        super(IntSetting, self).update(**kwargs)
+        self.default = self.to_python(self.default)
+        self.max_value = self.to_python(self.max_value)
+        self.min_value = self.to_python(self.min_value)
 
 
 class FloatSetting(IntSetting):
@@ -391,9 +406,15 @@ class StringSetting(Setting):
 
 
 class SettingsContainer(object):
+    """
+    Simple settings container. Could be two types: global and local.
 
-    def __init__(self, path):
+    When global mode enabled, can add local settings container as attribute,
+    when local only can add settings (not container) as attributes.
+    """
+    def __init__(self, path=None, app_name=None):
         self._data = []
+        self.app_name = app_name
         self.path = path
 
     def __iter__(self):
@@ -402,9 +423,13 @@ class SettingsContainer(object):
     def __len__(self):
         return len(self._data)
 
-    def append(self, value):
-        self._data.append(value)
-        setattr(self, value.name, value)
+    def add(self, name, value):
+        if name == '__project__':
+            for setting in value:
+                self.add(setting.name, setting)
+        else:
+            self._data.append(value)
+            setattr(self, name, value)
 
 
 def auth_permitted(user):
@@ -461,6 +486,19 @@ def force_bool(value):
     return boolean_states[value.lower()]
 
 
+def is_settings_container(value):
+    """
+    Return if ``value`` is ``SettingsContainer`` or ``LazySettings`` instance
+    or not.
+    """
+    try:
+        klass_name = value.__class__.__name__
+    except:
+        klass_name = ''
+
+    return isinstance(value, SettingsContainer) or klass_name == 'LazySettings'
+
+
 def load_from_path(path):
     """
     Load class or function from string path.
@@ -470,7 +508,8 @@ def load_from_path(path):
     return getattr(mod, attr)
 
 
-def parse_config(path=None):
+def parse_config(path, additional_types=None, default_values=None,
+                 app_name=None, all_settings=None):
     """
     Parse Configuration Definition File.
 
@@ -482,8 +521,82 @@ def parse_config(path=None):
 
     Also current function can called with ``path`` string.
     """
+    # If path isn't absolute - made it
+    if not os.path.isabs(path):
+        module = importlib.import_module(django_settings.SETTINGS_MODULE)
+        dirname = os.path.dirname(os.path.normpath(module.__file__))
+        path = os.path.join(dirname, path)
+
+    config = ConfigParser(dict_type=SortedDict)
+    empty_settings = SettingsContainer(path, app_name)
+
+    try:
+        config.read(path)
+    except ConfigParserError:
+        logger.exception('Cannot parse configuration definition file from ' \
+                         '%r', path)
+        return empty_settings
+
+    settings = copy.deepcopy(empty_settings)
+
+    for setting in config.sections():
+        if '.' in setting:
+            full_setting = setting
+            app_name, setting = setting.split('.', 1)
+
+            try:
+                app_settings = getattr(all_settings, app_name)
+            except AttributeError:
+                logger.exception('Cannot find settings for %r app', app_name)
+                continue
+
+            try:
+                app_setting = getattr(app_settings, setting)
+            except AttributeError:
+                logger.exception('Cannot find %r app setting %r',
+                                 app_name, setting)
+
+            data = dict(config.items(full_setting))
+
+            if default_values and full_setting in default_values:
+                data.update({'default': default_values[setting]})
+
+            try:
+                app_setting = update_app_setting(app_setting, data)
+            except ValueError:
+                logger.exception('Cannot redefine ``type`` attr for %r ' \
+                                 'setting', full_setting)
+                continue
+        else:
+            data = dict(config.items(setting))
+            data.update({'app_name': app_name, 'name': setting})
+
+            if default_values and setting in default_values:
+                data.update({'default': default_values[setting]})
+
+            try:
+                setting = data_to_setting(data, additional_types)
+            except SettingTypeDoesNotExist:
+                logger.exception('Cannot find proper setting class for %r ' \
+                                 'type', data.get('type'))
+                return empty_settings
+
+            settings.add(setting.name, setting)
+
+    return settings
+
+
+def parse_configs():
+    """
+    Parse all available config definition files as for all availbale apps and
+    for project itself at last.
+
+    Also we need to read additional types and additional default values before
+    parsing start.
+    """
     additional_types = getattr(django_settings, 'SETMAN_ADDITIONAL_TYPES', ())
     additional_setting_types = []
+    all_settings = SettingsContainer()
     default_values = {}
 
     for item in additional_types:
@@ -491,24 +604,11 @@ def parse_config(path=None):
             additional_type = load_from_path(item)
         except (AttributeError, TypeError):
             logger.exception('Cannot load %r additional setting type from ' \
-                             'configuration.', item)
+                             'configuration', item)
 
         additional_setting_types.append(additional_type)
 
-    if path is None:
-        path = getattr(django_settings, 'SETMAN_SETTINGS_FILE', None)
-
-        if path is None:
-            module = importlib.import_module(django_settings.SETTINGS_MODULE)
-            dirname = os.path.dirname(os.path.normpath(module.__file__))
-            path = os.path.join(dirname, DEFAULT_SETTINGS_FILENAME)
-
-    empty_settings = SettingsContainer(path)
-
-    if not os.path.isfile(path):
-        logger.error('Cannot read configuration definition file at %r. Exit ' \
-                     'from parsing!', path)
-        return empty_settings
+    additional_types = additional_setting_types
 
     # Use ``SortedDict`` instance for reading sections on config file instead
     # of default ``dict`` that can shuffle the sections.
@@ -531,33 +631,55 @@ def parse_config(path=None):
         finally:
             config.no_sections_mode = False
 
-    # Only then really read from config definition file
-    try:
-        config.read(path)
-    except ConfigParserError:
-        logger.exception('Cannot parse configuration definition file from ' \
-                         '%r', path)
-        return empty_settings
+    # Then try to load all available configuration definition files from all
+    # installed apps
+    apps = get_apps()
 
-    settings = copy.deepcopy(empty_settings)
+    # Don't forget to read pathes to app configuration definition files from
+    # Django settings
+    pathes = getattr(django_settings, 'SETMAN_SETTINGS_FILES', {})
 
-    for setting in config.sections():
-        data = dict(config.items(setting))
-        data.update({'name': setting})
+    for app in apps:
+        app_name = app.__name__.split('.')[-2]
+        path = pathes.get(app_name, DEFAULT_SETTINGS_FILENAME)
 
-        if setting in default_values:
-            data.update({'default': default_values[setting]})
+        if not os.path.isabs(path):
+            dirname = os.path.dirname(app.__file__)
+            path = os.path.join(dirname, path)
 
-        try:
-            setting = data_to_setting(data, additional_setting_types)
-        except SettingTypeDoesNotExist:
-            logger.exception('Cannot find proper setting class for %r type',
-                             data.get('type'))
-            return empty_settings
+        if not os.path.isfile(path):
+            continue
 
-        settings.append(setting)
+        settings = \
+            parse_config(path, additional_types, default_values, app_name)
+        all_settings.add(app_name, settings)
 
-    return settings
+    # And finally read project configuration definition file if any
+    path = getattr(django_settings, 'SETMAN_SETTINGS_FILE', None)
+    path = DEFAULT_SETTINGS_FILENAME if path is None else path
+
+    settings = parse_config(path, additional_types, default_values,
+                            all_settings=all_settings)
+    all_settings.add('__project__', settings)
+    all_settings.path = settings.path
+
+    return all_settings
 
 
-AVAILABLE_SETTINGS = parse_config()
+def update_app_setting(setting, data):
+    """
+    Update app setting from the project configuration definition file.
+    """
+    kwargs = {}
+
+    for key, value in data.items():
+        if key == 'type':
+            raise ValueError('Setting `type` attribute denied to update')
+
+        kwargs[key] = value
+
+    setting.update(**kwargs)
+    return setting
+
+
+AVAILABLE_SETTINGS = parse_configs()
