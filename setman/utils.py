@@ -331,7 +331,7 @@ class DecimalSetting(Setting):
     def to_python(self, value):
         if value is None:
             return value
-        return Decimal(value)
+        return Decimal(str(value))
 
     def update(self, **kwargs):
         super(DecimalSetting, self).update(**kwargs)

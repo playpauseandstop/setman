@@ -2,10 +2,16 @@
 django-setman Changes
 =====================
 
-0.2 (current)
+0.3 (current)
 -------------
 
+- ...
+
+0.2
+---
+
 + Add support of app-based settings.
++ Fix converting values to Decimal at ``DecimalSetting`` instances.
 + Return default value for setting even it not stored to database.
 + Lazy process ``validators`` and ``choices`` setting attributes, don't care
   about import ordering.
