@@ -84,17 +84,18 @@ class Settings(models.Model):
                           'update_date')
         return not name.startswith('_') and not name in possible_names
 
-    def revert(self, prefix=None):
+    def revert(self, app_name=None):
         """
         Revert all stored settings to default values.
         """
-        data = self.data.get(prefix, {}) if prefix else self.data
-        values = getattr(AVAILABLE_SETTINGS, prefix) if prefix \
-                                                     else AVAILABLE_SETTINGS
+        data = self.data.get(app_name, {}) if app_name else self.data
+        values = getattr(AVAILABLE_SETTINGS, app_name) if app_name \
+                                                       else AVAILABLE_SETTINGS
 
         for name, value in data.items():
             mixed = getattr(values, name, None)
 
+            # Pass if ``name`` isn't on available settings values
             if mixed is None:
                 continue
 

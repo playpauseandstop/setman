@@ -124,8 +124,3 @@ class LazySettings(object):
             return Settings.objects.get()
         except Settings.DoesNotExist:
             return Settings.objects.create(data={})
-
-    def _get_name(self, name):
-        """
-        Get setting name while trying to prepend preifx value if possible.
-        """
