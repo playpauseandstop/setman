@@ -17,7 +17,6 @@ settings
 
 .. autoclass:: setman.lazy.LazySettings
    :members:
-   :private-members:
 
 setman.helpers
 ==============

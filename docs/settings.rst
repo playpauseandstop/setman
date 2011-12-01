@@ -90,3 +90,21 @@ named::
 
 where ``<project`` - your project name and ``DIRNAME`` - path to directory
 with global project settings.
+
+SETMAN_SETTINGS_FILES
+=====================
+
+.. note:: New in 0.3 release.
+
+After adding support of configuration definition files to the app, we'll also
+need to add ability of setting up which exactly file use to each application if
+you want to customize things. By default ``setman`` tries to load
+``settings.cfg`` from app directory, but if you need something more different,
+use next setting::
+
+    SETMAN_SETTINGS_FILES = {
+        '<app_name>': '<app_name>.cfg'
+    }
+
+And ``setman`` will load configuration from ``'<app_name.cfg>'`` file instead
+of default one.

@@ -111,8 +111,8 @@ global project settings.
 Configuration Definition File
 -----------------------------
 
-Project-wide
-~~~~~~~~~~~~
+Project configuration
+~~~~~~~~~~~~~~~~~~~~~
 
 Okay, we hope that right now, all seems clear for you. But maybe, you've
 already interested how some settings being custom project settings. The answer
@@ -137,8 +137,8 @@ And, don't worry if you haven't ``settings.cfg`` and you've already installed
 logger. And don't raise any errors when configuration definition file doesn't
 exist or cannot parse.
 
-App-wide
-~~~~~~~~
+App configuration
+~~~~~~~~~~~~~~~~~
 
 But, what to do if you want to add some predefined settings to your reusable
 app and add ability of further users to change them? It's no problem at all
@@ -179,6 +179,10 @@ UI
 And the main feature of ``setman`` is simple UI for editing all custom project
 settings. It could be well configured for use with project styles or with
 standard Django admin styles.
+
+The most easy solution is use Django admin for editting settings, in that case
+you don't need to change anything in your project, just include ``admin.urls``
+at your root URLConf module. :doc:`And that's all </admin>`.
 
 For enabling UI, you'll need to include setman urls in your root URLConf
 module::
