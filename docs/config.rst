@@ -282,7 +282,7 @@ config definition file.
 Configuration definiton file for the app
 ========================================
 
-.. note:: New in 0.3 release.
+.. note:: New in 0.2 release.
 
 The main idea of giving ability to use app configuration definition files
 alongside with global (project) configuration definition files is support of

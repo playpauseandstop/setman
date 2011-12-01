@@ -94,7 +94,7 @@ with global project settings.
 SETMAN_SETTINGS_FILES
 =====================
 
-.. note:: New in 0.3 release.
+.. note:: New in 0.2 release.
 
 After adding support of configuration definition files to the app, we'll also
 need to add ability of setting up which exactly file use to each application if
