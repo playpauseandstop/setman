@@ -9,5 +9,5 @@ sqlite3.db
 docs/_build/
 dist/
 reports/
-testproject/local_settings.py
-testproject/ve/
+testproject-django/local_settings.py
+testproject-django/ve/

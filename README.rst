@@ -2,12 +2,42 @@
 setman
 ======
 
-Settings manager for Python web-apps. Another?
+Settings manager for Python web-apps and projects. Another?
+
+The Great Idea
+==============
+
+Some time ago we at oDesk PS developed `django-setman
+<http://github.com/odeskps/django-setman>`_ app, which is the answer if you
+need to specify custom settings in your Django project and add ability to setup
+these settings from UI (like Django admin CRUD).
+
+But later, we thought, what if modify this app and make it universal? We mean,
+not to use only with Django, but for example with Flask as well.
+
+So please welcome ``setman`` - universal Python app to work with settings
+that could be customized via UI.
 
 Requirements
 ============
 
 * `Python <http://www.python.org/>`_ 2.6 or higher
+
+Supported frontends (frameworks)
+================================
+
+* `Django <http://www.djangoproject.com/>`_ 1.3 or higher
+* `Flask <http://flask.pocoo.org/>`_ 0.8 or higher
+* `Pyramid <http://www.pylonsproject.com/>`_ 1.2 or higher
+
+Supported backends (ORM)
+========================
+
+* Django ORM
+* `SQLAlchemy <http://www.sqlalchemy.org/>`_ 0.7 or higher
+* `SQLObject <http://sqlobject.org/>`_ 1.2 or higher
+* `MongoEngine <http://mongoengine.org>`_ 0.5 or higher
+* File-based backend
 
 Installation
 ============
