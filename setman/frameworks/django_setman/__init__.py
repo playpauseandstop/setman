@@ -14,6 +14,7 @@ class Framework(SetmanFramework):
     """
     Add support of Django framework for ``setman`` library.
     """
+    auth_permitted_func = lambda request: request.user.is_superuser
     default_backend = DjangoBackend
     field_klasses = {
         'boolean': django_forms.BooleanField,
@@ -34,6 +35,8 @@ class Framework(SetmanFramework):
 
         defaults = {
             'additional_types': conf('SETMAN_ADDITIONAL_TYPES', ()),
+            'auth_permitted_func': conf('SETMAN_AUTH_PERMITTED',
+                                        self.auth_permitted_func),
             'default_values_file': conf('SETMAN_DEFAULT_VALUES_FILE'),
             'settings_file': conf('SETMAN_SETTINGS_FILE'),
             'settings_files': conf('SETMAN_SETTINGS_FILES', {}),

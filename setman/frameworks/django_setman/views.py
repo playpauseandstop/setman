@@ -10,7 +10,7 @@ from django.utils.translation import ugettext as _
 
 from setman import settings
 from setman.frameworks.django_setman.forms import SettingsForm
-from setman.frameworks.django_setman.utils import auth_permitted
+from setman.utils.auth import auth_permitted
 
 
 @login_required
@@ -35,7 +35,7 @@ def edit(request, template='setman/edit.html', title=None):
     But also, don't forget that only **logged** in users can access this page.
     Not guest users able to edit custom project settings in any way.
     """
-    if not auth_permitted(request.user):
+    if not auth_permitted(request):
         return render(request,
                       'setman/edit.html',
                       {'auth_forbidden': True},
@@ -69,7 +69,7 @@ def revert(request):
     if not redirect_to:
         redirect_to = reverse('setman_edit')
 
-    if not auth_permitted(request.user):
+    if not auth_permitted(request):
         return render(request,
                       'setman/edit.html',
                       {'auth_forbidden': True},

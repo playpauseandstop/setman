@@ -3,7 +3,7 @@ from django.contrib.admin.options import csrf_protect_m
 
 from setman.frameworks.django_setman.models import Settings
 from setman.frameworks.django_setman.views import edit
-from setman.frameworks.django_setman.utils import auth_permitted
+from setman.utils.auth import auth_permitted
 
 
 class SettingsAdmin(admin.ModelAdmin):
@@ -55,13 +55,13 @@ class SettingsAdmin(admin.ModelAdmin):
         Do not show "Change" link in admin panel for "Settings" line in
         "Settings Manager" app.
         """
-        return auth_permitted(request.user)
+        return auth_permitted(request)
 
     def has_delete_permission(self, request):
         """
         Do not show "Delete" link in admin panel for "Settings" models.
         """
-        return auth_permitted(request.user)
+        return auth_permitted(request)
 
 
 admin.site.register(Settings, SettingsAdmin)

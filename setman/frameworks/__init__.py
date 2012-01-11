@@ -19,6 +19,7 @@ class SetmanFramework(object):
 
     Also, you could setup default backend for framework.
     """
+    auth_permitted_func = None
     default_backend = None
     field_klasses = None
     field_name_separator = '.'

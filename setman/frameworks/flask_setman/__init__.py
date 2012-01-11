@@ -41,6 +41,9 @@ class Framework(SetmanFramework):
 
         defaults = {
             'additional_types': conf(app, 'SETMAN_ADDITIONAL_TYPES', ()),
+            'auth_permitted_func': conf(app,
+                                        'SETMAN_AUTH_PERMITTED',
+                                        self.auth_permitted_func),
             'default_values_file': conf(app, 'SETMAN_DEFAULT_VALUES_FILE'),
             'settings_file': conf(app, 'SETMAN_SETTINGS_FILE'),
             'settings_files': conf(app, 'SETMAN_SETTINGS_FILES', {}),

@@ -180,11 +180,12 @@ class TestAdminUIForbidden(TestCase):
     def setUp(self):
         super(TestAdminUIForbidden, self).setUp()
         self.admin_url = reverse('admin:index')
-        self.old_SETMAN_AUTH_PERMITTED = settings.SETMAN_AUTH_PERMITTED
-        django_settings.SETMAN_AUTH_PERMITTED = lambda user: False
+
+        self.old_auth_permitted_func = settings._framework.auth_permitted_func
+        settings._framework.auth_permitted_func = lambda request: False
 
     def tearDown(self):
-        django_settings.SETMAN_AUTH_PERMITTED = self.old_SETMAN_AUTH_PERMITTED
+        settings._framework.auth_permitted_func = self.old_auth_permitted_func
 
     def test_admin(self):
         client = self.login(TEST_USERNAME, is_admin=True)
@@ -321,11 +322,12 @@ class TestUIForbidden(TestCase):
     def setUp(self):
         super(TestUIForbidden, self).setUp()
 
-        self.old_SETMAN_AUTH_PERMITTED = settings.SETMAN_AUTH_PERMITTED
-        django_settings.SETMAN_AUTH_PERMITTED = lambda user: user.is_superuser
+        self.old_auth_permitted_func = settings._framework.auth_permitted_func
+        settings._framework.auth_permitted_func = \
+            lambda request: request.user.is_superuser
 
     def tearDown(self):
-        django_settings.SETMAN_AUTH_PERMITTED = self.old_SETMAN_AUTH_PERMITTED
+        settings._framework.auth_permitted_func = self.old_auth_permitted_func
 
     def test_edit_settings_forbidden(self):
         client = self.login(TEST_USERNAME)
