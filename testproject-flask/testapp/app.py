@@ -15,8 +15,7 @@ DIRNAME = os.path.abspath(os.path.dirname(__file__))
 rel = lambda *parts: os.path.abspath(os.path.join(DIRNAME, *parts))
 
 SETMAN_ADDITIONAL_TYPES = ('testapp.utils.IPAddressSetting', )
-SETMAN_SETTINGS_FILE = rel('..', 'settings.cfg')
-SETMAN_SETTINGS_FILES = {'testapp': rel('settings.cfg')}
+SETMAN_SETTINGS_FILES = {'namespace': rel('namespace.cfg')}
 
 app = Flask(__name__)
 app.config.from_object(__name__)

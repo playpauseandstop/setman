@@ -23,11 +23,11 @@ DEFAULT_SETTINGS = {
     'IP_SETTING': '127.0.0.1',
     'INT_SETTING': 24,
     'FLOAT_SETTING': 80.4,
-    'STRING_SETTING': 'Started with s',
-    'testapp': {
-        'app_setting': None,
+    'namespace': {
+        'namespace_setting': None,
         'setting_to_redefine': 0,
     },
+    'STRING_SETTING': 'Started with s',
     'VALIDATOR_SETTING': None,
 }
 
@@ -42,11 +42,11 @@ NEW_SETTINGS = {
     'INT_SETTING': 20,
     'IP_SETTING': '192.168.1.2',
     'FLOAT_SETTING': 189.2,
-    'STRING_SETTING': 'setting',
-    'testapp': {
-        'app_setting': 'someone',
+    'namespace': {
+        'namespace_setting': 'someone',
         'setting_to_redefine': 24,
     },
+    'STRING_SETTING': 'setting',
     'VALIDATOR_SETTING': 'abc xyz',
 }
 
@@ -60,11 +60,11 @@ WRONG_SETTINGS = {
     'INT_SETTING': (12, 48),
     'IP_SETTING': ('127.0.0', ),
     'FLOAT_SETTING': ('', ),
-    'STRING_SETTING': ('Not started from s', ),
-    'testapp': {
-        'app_setting': ('something', ),
+    'namespace': {
+        'namespace_setting': ('something', ),
         'setting_to_redefine': (72, ),
     },
+    'STRING_SETTING': ('Not started from s', ),
     'VALIDATOR_SETTING': ('abc', 'xyz', 'Something'),
 }
 
@@ -111,7 +111,8 @@ class TestSetmanBlueprint(TestCase):
             else:
                 from_values = getattr(values, name)
 
-                if name in ('app_setting', 'VALIDATOR_SETTING') and not value:
+                if name in ('namespace_setting', 'VALIDATOR_SETTING') and \
+                   not value:
                     self.assertIn(from_values, ('', None))
                 else:
                     self.assertEqual(from_values, value)
@@ -150,7 +151,7 @@ class TestSetmanBlueprint(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertIn('Edit Settings', response.data)
-        self.assertIn('testapp settings</h2>', response.data)
+        self.assertIn('namespace settings</h2>', response.data)
         self.assertIn('Project settings</h2>', response.data)
 
         data = self.prepare_data(NEW_SETTINGS)
@@ -254,7 +255,7 @@ class TestTestapp(TestCase):
         )
         self.assertIn('Project Configuration Definition File', response.data)
         self.assertIn('Apps Configuration Definition Files', response.data)
-        self.assertIn('App: testapp', response.data)
+        self.assertIn('App: namespace', response.data)
         self.assertIn('Default Values File', response.data)
         self.assertIn(
             'No default values file was specified in settings.', response.data
