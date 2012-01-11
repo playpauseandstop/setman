@@ -127,12 +127,17 @@ class SetmanSetting(object):
         has_value = bool(value)
         value = self.to_python(value)
 
+        if not self.required and not value:
+            return value
+
         if value is None:
             if has_value:
                 raise ValidationError('Enter a valid value.')
 
             if self.required:
                 raise ValidationError('This setting is required.')
+
+            return value
 
         for validator in self.validators:
             value = validator(value)
@@ -300,16 +305,16 @@ class DecimalSetting(SetmanSetting):
     def builtin_validators(self):
         validators = []
 
-        if self.decimal_places:
+        if self.decimal_places is not None:
             validators.append(decimal_places_validator(self.decimal_places))
 
-        if self.max_digits:
+        if self.max_digits is not None:
             validators.append(max_digits_validator(self.max_digits))
 
-        if self.max_value:
+        if self.max_value is not None:
             validators.append(max_value_validator(self.max_value))
 
-        if self.min_value:
+        if self.min_value is not None:
             validators.append(min_value_validator(self.min_value))
 
         return validators
@@ -344,10 +349,10 @@ class IntSetting(SetmanSetting):
     def builtin_validators(self):
         validators = []
 
-        if self.max_value:
+        if self.max_value is not None:
             validators.append(max_value_validator(self.max_value))
 
-        if self.min_value:
+        if self.min_value is not None:
             validators.append(min_value_validator(self.min_value))
 
         return validators
@@ -391,13 +396,13 @@ class StringSetting(SetmanSetting):
     def builtin_validators(self):
         validators = []
 
-        if self.max_length:
+        if self.max_length is not None:
             validators.append(max_length_validator(self.max_length))
 
-        if self.min_length:
+        if self.min_length is not None:
             validators.append(min_length_validator(self.min_length))
 
-        if self.regex:
+        if self.regex is not None:
             validators.append(regex_validator(self.regex))
 
         return validators
@@ -411,3 +416,10 @@ class StringSetting(SetmanSetting):
             if not 'regex' in self.field_args:
                 return self.field_args + ('regex', )
         return super(StringSetting, self).get_field_args()
+
+    def update(self, **kwargs):
+        super(StringSetting, self).update(**kwargs)
+
+        int_setting = IntSetting()
+        self.max_length = int_setting.to_python(self.max_length)
+        self.min_length = int_setting.to_python(self.min_length)
