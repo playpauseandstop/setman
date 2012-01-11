@@ -5,7 +5,12 @@ from setman.utils.types import SetmanSetting
 
 class IPAddressField(fields.TextField):
 
-    validators = validators.IPAddress
+    def __init__(self, **kwargs):
+        if not 'validators' in kwargs:
+            kwargs['validators'] = []
+        kwargs['validators'].append(validators.IPAddress())
+
+        super(IPAddressField, self).__init__(**kwargs)
 
 
 class IPAddressSetting(SetmanSetting):

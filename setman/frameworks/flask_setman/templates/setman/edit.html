@@ -4,6 +4,10 @@
 {% block content_title %}Edit Settings{% endblock %}
 {% block content %}
 
+    {% if auth_forbidden %}
+    <h3 class="errors">Access Forbidden</h3>
+    <p>You have not necessary rights to access current page.</p>
+    {% else %}
     <form action="" method="post">
         {% if form.errors %}
         <ul class="messages">
@@ -32,6 +36,7 @@
             <button><a href="{{ url_for("setman.revert") }}" title="Revert all settings to default values">Revert</a></button>
         </p>
     </form>
+    {% endif %}
 
     <p>Back to <a href="{{ url_for("home") }}">home page</a>.</p>
 

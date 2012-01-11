@@ -93,6 +93,13 @@ class TestCase(unittest.TestCase):
             return url_for(*args, **kwargs)
 
 
+class TestFlaskSettings(unittest.TestCase):
+
+    def test_flask_settings(self):
+        for key in app.config.keys():
+            self.assertEqual(getattr(settings, key), app.config[key])
+
+
 class TestSetmanBlueprint(TestCase):
 
     def check_settings(self, data, prefix=None):
@@ -168,7 +175,42 @@ class TestSetmanBlueprint(TestCase):
         self.check_settings(DEFAULT_SETTINGS)
 
     def test_edit_errors(self):
-        pass
+        def process(key):
+            if '__' in key:
+                app_name, real_key = key.split('__')
+                settings_values = getattr(settings, app_name)
+            else:
+                settings_values, real_key = settings, key
+
+            return settings_values, real_key
+
+        data = self.prepare_data(WRONG_SETTINGS)
+
+        for key, values in data.iteritems():
+            settings_values, real_key = process(key)
+            old_value = getattr(settings_values, real_key)
+
+            for value in values:
+                data = self.prepare_data(DEFAULT_SETTINGS)
+                data.update({key: value})
+
+                data = self.prepare_data(data)
+                response = self.app.post(self.edit_url, data=data)
+
+                self.assertEqual(response.status_code, 200,
+                                 '%s = %r gives %r status code' % \
+                                 (key, value, response.status_code))
+                self.assertIn(
+                    'Settings cannot be saved cause of validation issues. ' \
+                    'Check for errors below.',
+                    response.data
+                )
+                self.assertIn('<dd class="errors">', response.data)
+
+                settings._backend.clear()
+
+                settings_values, real_key = process(key)
+                self.assertEqual(getattr(settings_values, real_key), old_value)
 
     def test_revert(self):
         self.check_settings(DEFAULT_SETTINGS)
@@ -187,8 +229,36 @@ class TestSetmanBlueprint(TestCase):
         self.check_settings(DEFAULT_SETTINGS)
 
 
-class TestTestapp(unittest.TestCase):
-    pass
+class TestTestapp(TestCase):
+
+    def test_home(self):
+        response = self.app.get(self.url('home'))
+
+        self.assertIn('setman', response.data)
+        self.assertIn('Test Project for Flask Framework', response.data)
+        self.assertIn(
+            '<a href="%s">Edit test project settings</a>' % (self.edit_url),
+            response.data
+        )
+        self.assertIn(
+            '<a href="%s">View configuration definition and default values ' \
+            'files</a>' % self.url('view_settings'),
+            response.data
+        )
+
+    def test_view_settings(self):
+        response = self.app.get(self.url('view_settings'))
+
+        self.assertIn(
+            'Configuration Definition and Default Values Files', response.data
+        )
+        self.assertIn('Project Configuration Definition File', response.data)
+        self.assertIn('Apps Configuration Definition Files', response.data)
+        self.assertIn('App: testapp', response.data)
+        self.assertIn('Default Values File', response.data)
+        self.assertIn(
+            'No default values file was specified in settings.', response.data
+        )
 
 
 if __name__ == '__main__':

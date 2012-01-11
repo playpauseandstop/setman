@@ -15,7 +15,6 @@ DIRNAME = os.path.abspath(os.path.dirname(__file__))
 rel = lambda *parts: os.path.abspath(os.path.join(DIRNAME, *parts))
 
 SETMAN_ADDITIONAL_TYPES = ('testapp.utils.IPAddressSetting', )
-SETMAN_AUTH_PERMITTED = lambda user: True
 SETMAN_SETTINGS_FILE = rel('..', 'settings.cfg')
 SETMAN_SETTINGS_FILES = {'testapp': rel('settings.cfg')}
 

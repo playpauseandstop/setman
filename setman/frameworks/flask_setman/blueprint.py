@@ -1,8 +1,12 @@
 from random import randint
 
-from flask import Blueprint, flash, redirect, render_template, request, url_for
+from flask import Blueprint, Response, flash, redirect, render_template, \
+    request, url_for
 
+from setman import settings
+from setman.frameworks.flask_setman.forms import settings_form_factory
 from setman.frameworks.flask_setman.utils import update_form_fields
+from setman.utils.auth import auth_permitted
 
 
 setman_blueprint = Blueprint('setman', __name__, template_folder='templates')
@@ -13,10 +17,14 @@ def edit():
     """
     Edit all available settings.
     """
-    from setman.frameworks.flask_setman.forms import SettingsForm
+    if not auth_permitted(request):
+        output = render_template('setman/edit.html', auth_forbidden=True)
+        return Response(output, status=403)
+
+    settings_form = settings_form_factory()
 
     if request.method == 'POST':
-        form = SettingsForm(request.form)
+        form = settings_form(request.form)
 
         if form.validate():
             form.save()
@@ -25,7 +33,7 @@ def edit():
             return redirect('%s?%d' % (url_for('setman.edit'),
                                        randint(1000, 9999)))
     else:
-        form = SettingsForm()
+        form = settings_form()
 
     return render_template('setman/edit.html', form=update_form_fields(form))
 
@@ -36,6 +44,10 @@ def revert():
     Revert all settings to default values.
     """
     from setman import settings
+
+    if not auth_permitted(request):
+        output = render_template('setman/edit.html', auth_forbidden=True)
+        return Response(output, status=403)
 
     settings.revert()
     flash('Settings have been reverted to default values.', 'success')

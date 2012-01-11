@@ -98,7 +98,7 @@ class Framework(SetmanFramework):
         """
         Convert Flask's config dict to something like Django settings instance.
         """
-        return self.flask_app.config
+        return SetmanSettings(self.flask_app.config)
 
     def translate_field_kwargs(self, kwargs):
         """
@@ -161,3 +161,16 @@ class Framework(SetmanFramework):
 
         kwargs.update({'validators': validators_list})
         return kwargs
+
+
+class SetmanSettings(object):
+    """
+    Wrap flask's ``Config`` instance into compatible for ``setman`` library.
+    """
+    __slots__ = ('_config', )
+
+    def __init__(self, config):
+        self._config = config
+
+    def __getattr__(self, name):
+        return self._config[name]

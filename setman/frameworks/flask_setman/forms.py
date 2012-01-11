@@ -6,12 +6,12 @@ except ImportError:
 from setman import settings
 
 
-__all__ = ('SettingsForm', )
+__all__ = ('settings_form_factory', )
 
 
-class SettingsForm(Form):
+class BaseSettingsForm(Form):
     """
-    Simple settings form, which would be dynamically extended by available
+    Base settings form, which would be dynamically extended by available
     settings later.
     """
     def save(self):
@@ -21,7 +21,15 @@ class SettingsForm(Form):
         settings._framework.save_form_fields(self.data)
 
 
-fields = settings._framework.build_form_fields()
+def settings_form_factory():
+    """
+    We should dynamically add fields to the form, not only one time before
+    server reload.
+    """
+    SettingsForm = type('SettingsForm', (BaseSettingsForm, ), {})
+    fields = settings._framework.build_form_fields()
 
-for name, field in fields.iteritems():
-    setattr(SettingsForm, name, field)
+    for name, field in fields.iteritems():
+        setattr(SettingsForm, name, field)
+
+    return SettingsForm
