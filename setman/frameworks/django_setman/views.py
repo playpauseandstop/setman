@@ -24,13 +24,14 @@ def edit(request, template='setman/edit.html', title=None):
     For example, if you need to permit staff users to edit settings too, you
     need to specify::
 
-        SETMAN_AUTH_PERMITTED = lambda u: u.is_staff
+        SETMAN_AUTH_PERMITTED = lambda request: request.user.is_staff
 
     in your project settings module.
 
     Also, you can check necessary profile role there as well as::
 
-        SETMAN_AUTH_PERMITTED = lambda u: u.profile.role == 'project_manager'
+        SETMAN_AUTH_PERMITTED = \
+            lambda request: request.user.profile.role == 'project_manager'
 
     But also, don't forget that only **logged** in users can access this page.
     Not guest users able to edit custom project settings in any way.
