@@ -6,9 +6,9 @@ from django.dispatch import receiver
 from django.utils.translation import ugettext as __, ugettext_lazy as _
 from django.utils.encoding import force_unicode
 
-from setman.fields import SettingsField
-from setman.managers import CACHE_KEY, SettingsManager
-from setman.utils import AVAILABLE_SETTINGS, is_settings_container
+from setman import settings
+from setman.backends.django.fields import JSONField
+from setman.backends.django.managers import CACHE_KEY, SettingsManager
 
 
 __all__ = ('Settings', )
@@ -40,7 +40,7 @@ class Settings(models.Model):
     * ``update_date`` - Time when model instance has been changed last time.
 
     """
-    data = SettingsField(_('data'), blank=True, default='', editable=False)
+    data = JSONField(_('data'), blank=True, default='', editable=False)
 
     create_date = models.DateTimeField(_('created at'), auto_now_add=True)
     update_date = models.DateTimeField(_('updated at'), auto_now=True)
@@ -48,7 +48,8 @@ class Settings(models.Model):
     objects = SettingsManager()
 
     class Meta:
-        app_label = app_label_title('setman', __('Settings Manager'))
+        app_label = app_label_title('django_setman', __('Settings Manager'))
+        db_table = 'setman_settings'
         verbose_name = _('settings')
         verbose_name_plural = _('settings')
 
@@ -84,26 +85,6 @@ class Settings(models.Model):
                           'update_date')
         return not name.startswith('_') and not name in possible_names
 
-    def revert(self, app_name=None):
-        """
-        Revert all stored settings to default values.
-        """
-        data = self.data.get(app_name, {}) if app_name else self.data
-        values = getattr(AVAILABLE_SETTINGS, app_name) if app_name \
-                                                       else AVAILABLE_SETTINGS
-
-        for name, value in data.items():
-            mixed = getattr(values, name, None)
-
-            # Pass if ``name`` isn't on available settings values
-            if mixed is None:
-                continue
-
-            if is_settings_container(mixed):
-                self.revert(name)
-            else:
-                data[name] = mixed.default
-
     def validate_unique(self, exclude=None):
         """
         Check that no else ``Settings`` insances has been created.
@@ -123,11 +104,10 @@ def clear_settings_cache(instance, **kwargs):
     """
     Clear settings cache if any.
     """
-    from setman import settings
-    settings._clear()
-
     if CACHE_KEY in cache:
         cache.delete(CACHE_KEY)
+
+    settings._backend.clear()
 
 
 @receiver(signals.pre_save, sender=Settings)

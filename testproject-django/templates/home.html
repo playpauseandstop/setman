@@ -5,15 +5,16 @@
     <p>{% blocktrans with user=user.get_full_name|default:user.username %}Hi, <strong>{{ user }}</strong>!{% endblocktrans %}</p>
 
     <p>{% blocktrans %}
-        Welcome to the home page of test project for <strong>django-setman</strong> library
-        (Configuration app at oDesk Sprint 2011). Please, select an available action:
+        Welcome to the home page of Django test project for <strong>setman</strong> library.
+        Please, select an available action:
     {% endblocktrans %}</p>
 
     <ul class="links">
         <li><a href="{% url setman_edit %}">{{ _("Edit test project settings") }}</a></li>
+        {% if user.is_staff %}<li><a href="{% url admin:django_setman_settings_changelist %}">{{ _("Edit test project settings via Django admin") }}</a></li>{% endif %}
         <li><a href="{% url view_settings %}">{{ _("View configuration definition and default values files") }}</a></li>
         <li><a href="{% url docs %}">{{ _("View django-setman documentation") }}</a></li>
-        <li><a href="https://github.com/odeskps/django-setman">{{ _("View source code @ GitHub") }}</a></li>
+        <li><a href="https://github.com/playpauseandstop/setman">{{ _("View source code @ GitHub") }}</a></li>
         <li><a href="{% url django.contrib.auth.views.logout %}">{{ _("Leave test project") }}</a></li>
     </ul>
 

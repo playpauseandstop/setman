@@ -1,5 +1,5 @@
 from setman import settings
-from setman.utils import is_settings_container
+from setman.utils.parsing import is_settings_container
 
 
 __all__ = ('get_config', )
@@ -27,7 +27,7 @@ def get_config(name, default=None):
     values = getattr(settings, app_name) if app_name else settings
 
     if default is not None:
-        result = getattr(values, name, default)
+        result = getattr(values, name) if hasattr(values, name) else default
     else:
         result = getattr(values, name)
 

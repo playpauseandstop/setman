@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block content %}
+
+    <p>
+        Welcome to the home page of Flask test project for <strong>setman</strong> library.
+        Please, select an available action:
+    </p>
+
+    <ul class="links">
+        <li><a href="{{ url_for("setman.edit") }}">Edit test project settings</a></li>
+        <li><a href="{{ url_for("view_settings") }}">View configuration definition and default values files</a></li>
+        <li><a href="{{ url_for("docs") }}">View django-setman documentation</a></li>
+        <li><a href="https://github.com/playpauseandstop/setman">View source code @ GitHub</a></li>
+    </ul>
+
+{% endblock %}

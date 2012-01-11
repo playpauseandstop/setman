@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Settings{% endblock %}
+{% block content_title %}Edit Settings{% endblock %}
+{% block content %}
+
+    <form action="" method="post">
+        {% if form.errors %}
+        <ul class="messages">
+            <li class="error">Settings cannot be saved cause of validation issues. Check for errors below.</li>
+        </ul>
+        {% endif %}
+
+        <dl class="fields">
+        {% set prev_app_name = None %}
+        {% for f in form %}
+        {% if loop.index == 1 or prev_app_name != f.app_name %}
+        </dl>
+        <h2 class="indent-top">{% if f.app_name is none %}Project{% else %}{{ f.app_name }}{% endif %} settings</h2>
+        <dl class="fields">
+        {% endif %}
+            <dt><label for="{{ f.id }}">{{ f.label }}</label></dt>
+            <dd class="field">{{ f }}</dd>
+            {% if f.errors %}<dd class="errors">{{ f.errors|join(" ") }}</dd>{% endif %}
+            {% if f.description %}<dd class="help">{{ f.description }}</dd>{% endif %}
+            {% set prev_app_name = f.app_name %}
+        {% endfor %}
+        </dl>
+
+        <p class="buttons">
+            <button type="submit">Submit</button>
+            <button><a href="{{ url_for("setman.revert") }}" title="Revert all settings to default values">Revert</a></button>
+        </p>
+    </form>
+
+    <p>Back to <a href="{{ url_for("home") }}">home page</a>.</p>
+
+{% endblock %}

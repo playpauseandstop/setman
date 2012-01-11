@@ -6,8 +6,14 @@
 MANIFEST
 sqlite3.db
 
+build/
 docs/_build/
 dist/
 reports/
 testproject-django/local_settings.py
 testproject-django/ve/
+testproject-flask/settings.json
+testproject-flask/ve/
+testrpoject-noframework/settings.ini
+testproject-noframework/settings.json
+testproject-noframework/settings.pickle

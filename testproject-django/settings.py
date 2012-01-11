@@ -21,7 +21,7 @@ ADMIN_MEDIA_PREFIX = '/admin-media/'
 # -----------------------
 # Authentication settings
 # -----------------------
-AUTH_PROFILE_MODULE = 'core.UserProfile'
+AUTH_PROFILE_MODULE = 'testapp.UserProfile'
 AUTHENTICATION_BACKENDS = ('django_odesk.auth.backends.TeamAuthBackend', )
 
 # --------------
@@ -61,7 +61,7 @@ TEMPLATE_DEBUG = DEBUG
 # Init Test Project apps for use by Django-Jenkins to calculate coverage and
 # run pylint only over this apps
 #
-PROJECT_APPS = ('setman', 'testproject.core')
+PROJECT_APPS = ('setman.frameworks.django_setman', 'testapp')
 BASE_INSTALLED_APPS = (
     # Django apps
     'django.contrib.admin',
@@ -156,9 +156,8 @@ TEMPLATE_LOADERS = (
 # -------------------------------
 # Other necessary Django settings
 # -------------------------------
-ROOT_URLCONF = 'testproject.urls'
+ROOT_URLCONF = 'urls'
 SECRET_KEY = 'please, set up proper value in local_settings.py module'
-
 
 # ==============
 # oDesk settings
@@ -198,7 +197,7 @@ ODESK_AUTH_USERS = ()
 # setman configuration
 # ====================
 SETMAN_ADDITIONAL_TYPES = (
-    'testproject.core.utils.IPAddressSetting',
+    'testapp.utils.IPAddressSetting',
 )
 # Allow edit settings to any user
 SETMAN_AUTH_PERMITTED = lambda user: True

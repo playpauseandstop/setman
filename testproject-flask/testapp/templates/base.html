@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+    <title>setman &bull; {% block title %}Test Project for Flask Framework{% endblock %}</title>
+
+    <meta charset="utf-8">
+    <link href="{{ url_for("static", filename="css/style.css") }}" media="screen,projection,tv" rel="stylesheet" type="text/css">
+    {% block extra_head %}{% endblock %}
+</head>
+
+<body>
+
+    <header>
+        <h1>setman</h1>
+        <h2>{% block content_title %}Test Project for Flask Framework{% endblock %}</h2>
+        <a class="github-ribbon" href="https://github.com/playpauseandstop/setman">
+            <img src="{{ url_for("static", filename="images/github.png") }}" alt="Fork me on GitHub">
+        </a>
+    </header>
+
+    <article>
+        {% block messages %}{% with messages = get_flashed_messages(with_categories=True) %}
+        {% if messages %}<ul class="messages">{% for category, message in messages %}
+            <li{% if category %} class="{{ category }}"{% endif %}>{{ message }}</li>
+        {% endfor %}</ul>{% endif %}
+        {% endwith %}{% endblock %}
+        {% block content %}{% endblock %}
+    </article>
+
+    <footer>Igor Davydenko, 2012.</footer>
+
+</body>
+
+</html>

@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block title %}Configuration Definition and Default Values Files{% endblock %}
+{% block content_title %}Configuration Definition and Default Values Files{% endblock %}
+{% block content %}
+
+    <h3>Project Configuration Definition File</h3>
+    <pre class="indent-top"><code>{{ project_settings_content }}</code></pre>
+
+    <h3 class="indent-top">Apps Configuration Definition Files</h3>
+    {% for key,value in apps_settings_contents.items() %}
+    <h3 class="indent-top">App: {{ key }}</h3>
+    <pre class="indent-top">{{ value }}</pre>
+    {% else %}
+    <p class="indent-top"><em>No apps configuration definiton files was found.</em></p>
+    {% endfor %}
+
+    <h3 class="indent-top">Default Values File</h3>
+    {% if default_values_content %}
+    <pre class="indent-top"><code>{{ default_values_content }}</code></pre>
+    {% else %}
+    <p class="indent-top"><em>No default values file was specified in settings.</em></p>
+    {% endif %}
+
+    <p>Back to <a href="{{ url_for("home") }}">home page</a>.</p>
+
+{% endblock %}

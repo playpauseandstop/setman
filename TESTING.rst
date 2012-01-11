@@ -1,37 +1,41 @@
-==============================
-Test Project for django-setman
-==============================
+================================
+Test Projects for setman library
+================================
 
-``django-setman`` comes with simple test project that made for check how
-library works.
+``setman`` comes with simple test projects that made for check how library
+works.
+
+Django
+======
 
 Initialization
-==============
+--------------
 
 Bootstrap testproject with::
 
-    $ cd testproject
+    $ cd testproject-django
     $ python bootstrap.py
 
 Then init database and setman migrations::
 
-    $ python manage.py syncdb --noinput
-    $ python manage.py migrate --noinput
+    $ cd ..
+    $ python testproject-django/manage.py syncdb --noinput
+    $ python testproject-django/manage.py migrate --noinput
 
 And finally you can to get pair of oDesk keys and setup it to
 ``local_settings.py`` module. After, feel free to run development server::
 
-    $ python manage.py runserver <port>
+    $ python testproject-django/manage.py runserver <port>
 
 and check how ``django-setman`` works.
 
 Run tests
-=========
+---------
 
 For running tests, check that project already bootstrapped. If all ok, just
 run standard Django test command::
 
-    $ python manage.py test core setman
+    $ python testproject-django/manage.py test testapp
 
 .. note:: We don't need to provide custom test settings module. All necessary
    options setup at ``testproject.settings`` and your ``local_settings``.
@@ -39,6 +43,33 @@ run standard Django test command::
 Also project has **Jenkins** support (via ``django-jenkins`` app). So to run
 complete Jenkins tasks, execute::
 
-    $ python manage.py jenkins
+    $ python testproject-django/manage.py jenkins
 
 and then check for data in ``reports/`` directory.
+
+No framework
+============
+
+Initialization
+--------------
+
+You don't need to bootstrap testproject, cause it doesn't use any external
+libraries.
+
+Run app
+-------
+
+::
+
+    $ make -C testproject-noframework app
+    $ FORMAT=(ini|json|pickle) make -C testproject-noframework app
+
+Test application just read settings from configurationd definition files and
+provide ability to edit these settings.
+
+Run tests
+---------
+
+For running tests, execute next command::
+
+    $ make -C testproject-noframework test

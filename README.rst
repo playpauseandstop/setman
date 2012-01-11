@@ -21,23 +21,19 @@ that could be customized via UI.
 Requirements
 ============
 
-* `Python <http://www.python.org/>`_ 2.6 or higher
+* `Python <http://www.python.org/>`_ 2.6 or 2.7
 
 Supported frontends (frameworks)
 ================================
 
 * `Django <http://www.djangoproject.com/>`_ 1.3 or higher
 * `Flask <http://flask.pocoo.org/>`_ 0.8 or higher
-* `Pyramid <http://www.pylonsproject.com/>`_ 1.2 or higher
 
 Supported backends (ORM)
 ========================
 
 * Django ORM
-* `SQLAlchemy <http://www.sqlalchemy.org/>`_ 0.7 or higher
-* `SQLObject <http://sqlobject.org/>`_ 1.2 or higher
-* `MongoEngine <http://mongoengine.org>`_ 0.5 or higher
-* File-based backend
+* File-based backend (supported formats: ini, json or pickle)
 
 Installation
 ============

@@ -20,12 +20,14 @@ urlpatterns = patterns('',
     (r'^admin/doc/', include('django.contrib.admindocs.urls')),
     (r'^admin/', include(admin.site.urls)),
 
-    (r'^setman/', include('setman.urls')),
-    (r'^test/', include('testproject.core.urls')),
+    (r'^setman/', include('setman.frameworks.django_setman.urls')),
+    (r'^test/', include('testapp.urls')),
 )
 
 if settings.SERVE_STATIC_FILES:
     urlpatterns += patterns('django.views.static',
+        ('^favicon.ico', 'serve', {'document_root': settings.MEDIA_ROOT,
+                                   'path': 'favicon.ico'}),
         ('^%s/(?P<path>.*)$' % settings.MEDIA_URL.strip('/'), 'serve',
          {'document_root': settings.MEDIA_ROOT}),
     )

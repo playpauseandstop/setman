@@ -1,0 +1,69 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_modify adminmedia %}
+
+{% block extrastyle %}{{ block.super }}<link rel="stylesheet" type="text/css" href="{% admin_media_prefix %}css/forms.css" />{% endblock %}
+{% block extrahead %}
+    {{ block.super }}
+    <script src="{% admin_media_prefix %}js/jquery.min.js" type="text/javascript"></script>
+    <script type="text/javascript"><!--
+        $(document).ready(function() {
+            $("fieldset").each(function(i) {
+                var $this = $(this);
+                if (!$.trim($this.text())) {
+                    $this.hide();
+                }
+            });
+        });
+    --></script>
+{% endblock %}
+
+{% block breadcrumbs %}<div class="breadcrumbs">
+    <a href="/admin/">{% trans 'Home' %}</a> &rsaquo;
+    {{ _("Settings Manager") }}
+</div>{% endblock %}
+
+{% block content %}
+
+    {% if auth_forbidden %}
+    <h3 class="errors">{{ _("Access Forbidden") }}</h3>
+    <p>{{ _("You have not necessary rights to access current page.") }}</p>
+    {% else %}
+    <form action="" method="post">
+        {% csrf_token %}
+
+        {% if form.errors %}
+            <p class="errornote">{{ _("Settings cannot be saved cause of validation issues. Check for errors below.") }}</p>
+        {% endif %}
+
+        <fieldset class="module aligned">
+        {% for f in form %}
+            {% ifchanged f.field.app_name %}
+            </fieldset>
+            <fieldset class="module aligned"><h2>{% with app_name=f.field.app_name|default:_("Project") %}{% blocktrans %}{{ app_name }} settings{% endblocktrans %}{% endwith %}</h2>
+            {% endifchanged %}
+            <div class="form-row {% if f.errors %}errors{% endif %}">
+
+            {% if f.errors %}
+                <ul class="errorlist">
+                    {% for error in f.errors %}
+                        <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+                <div>
+                    <label for="{{ f.auto_id }}">{{ f.label }}</label>
+                    {{ f }}
+                    {% if f.help_text %}<p class="help">{{ f.help_text }}</p>{% endif %}
+                </div>
+            </div>
+        {% endfor %}
+        </fieldset>
+
+        <div class="submit-row">
+            <input class="default" type="submit" value="{{ _("Save") }}" />
+            <p class="deletelink-box"><a href="{% url admin:django_setman_settings_revert %}?next={% url admin:django_setman_settings_changelist %}" title="{{ _("Revert all settings to default values") }}">{{ _("Revert") }}</a></p>
+        </div>
+    </form>
+    {% endif %}
+
+{% endblock %}

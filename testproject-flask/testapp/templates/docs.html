@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block title %}Documentation{% endblock %}
+{% block content_title %}Documentation{% endblock %}
+{% block content %}
+
+    <p>Looks like, the docs haven't built yet. To build the docs follow next instructions:</p>
+
+    <ul>
+        <li>
+            Open Terminal and go to the project directory,
+            <pre><code>$ cd {{ dirname }}</code></pre>
+        </li>
+        <li class="indent-top">
+            Build HTML docs, with:
+            <pre><code>$ make -C docs html</code></pre>
+        </li>
+    </ul>
+
+    <p>After all done, refresh this page!</p>
+
+    <p>Back to <a href="{{ url_for("home") }}">home page</a>.</p>
+
+{% endblock %}

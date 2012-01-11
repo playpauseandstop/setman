@@ -1,7 +1,8 @@
-from django.conf import settings as django_settings
-
-from setman.models import Settings
-from setman.utils import AVAILABLE_SETTINGS, is_settings_container
+from setman.backends import SetmanBackend
+from setman.exceptions import ImproperlyConfigured, SettingDoesNotExist
+from setman.frameworks import SetmanFramework
+from setman.utils import importlib, logger
+from setman.utils.parsing import is_settings_container, parse_configs
 
 
 __all__ = ('LazySettings', )
@@ -12,24 +13,38 @@ class LazySettings(object):
     Simple proxy object that accessed database only when user needs to read
     some setting.
     """
-    __slots__ = ('_custom_cache', '_settings', '_parent', '_prefix')
+    __slots__ = ('_available_settings_cache', '_backend', '_fail_silently',
+                 '_framework', '_settings', '_parent', '_prefix')
 
     def __init__(self, settings=None, prefix=None, parent=None):
         """
         Initialize lazy settings instance.
         """
-        self._settings = settings or AVAILABLE_SETTINGS
+        self._settings = settings
         self._parent = parent
         self._prefix = prefix
+
+        self._backend = parent._backend if parent else None
+        self._framework = parent._framework if parent else None
 
     def __delattr__(self, name):
         if name.startswith('_'):
             return super(LazySettings, self).__delattr__(name)
 
-        if hasattr(django_settings, name):
-            delattr(django_settings, name)
-        else:
-            delattr(self._custom, name)
+        if name == 'available_settings':
+            del self._available_settings_cache
+
+        if not self._configured:
+            self.autoconf()
+
+        framework_settings = self._framework.settings
+
+        if hasattr(framework_settings, name):
+            delattr(framework_settings, name)
+        elif name in self._backend.data:
+            del self._backend.data[name]
+
+        raise SettingDoesNotExist(name)
 
     def __getattr__(self, name):
         """
@@ -42,7 +57,14 @@ class LazySettings(object):
         if name.startswith('_'):
             return super(LazySettings, self).__getattr__(name)
 
-        data, prefix = self._custom.data, self._prefix
+        if name == 'available_settings':
+            return self._available_settings_cache
+
+        if not self._configured:
+            self.autoconf()
+
+        data, prefix = self._backend.data, self._prefix
+        framework_settings = self._framework.settings
 
         # Read app setting from database
         if prefix and prefix in data and name in data[prefix]:
@@ -50,9 +72,9 @@ class LazySettings(object):
         # Read project setting from database
         elif name in data and not isinstance(data[name], dict):
             return data[name]
-        # Or from Django settings
-        elif hasattr(django_settings, name):
-            return getattr(django_settings, name)
+        # Or from framework settings
+        elif hasattr(framework_settings, name):
+            return getattr(framework_settings, name)
         # Or read default value from available settings
         elif hasattr(self._settings, name):
             mixed = getattr(self._settings, name)
@@ -63,7 +85,7 @@ class LazySettings(object):
             return mixed.default
 
         # If cannot read setting - raise error
-        raise AttributeError('Settings has not attribute %r' % name)
+        raise SettingDoesNotExist(name)
 
     def __setattr__(self, name, value):
         """
@@ -72,55 +94,172 @@ class LazySettings(object):
         if name.startswith('_'):
             return super(LazySettings, self).__setattr__(name, value)
 
-        # First of all try to setup value to Django setting
-        if hasattr(django_settings, name):
-            setattr(django_settings, name, value)
+        if not self._configured:
+            self.autoconf()
+
+        framework_settings = self._framework.settings
+
+        # First of all try to setup value to framework setting
+        if hasattr(framework_settings, name):
+            setattr(framework_settings, name, value)
         # Then setup value to project setting
         elif not self._prefix:
-            setattr(self._custom, name, value)
+            self._backend.data[name] = value
         # And finally setup value to app setting
         else:
-            data, prefix = self._custom.data, self._prefix
+            data, prefix = self._backend.data, self._prefix
 
             if not prefix in data:
                 data[prefix] = {}
 
             data[prefix].update({name: value})
 
+    def autoconf(self):
+        """
+        Auto configure ``setman`` library.
+        """
+        # Do we work with Django?
+        try:
+            from django.conf import settings
+            settings.SETTINGS_MODULE
+        except ImportError:
+            pass
+        else:
+            return self.configure(framework='setman.frameworks.django_setman')
+
+        message = 'Not enough data to auto configure setman library. Please, '\
+                  'call ``settings.configure`` manually.'
+        logger.error(message)
+
+        raise ImproperlyConfigured(message)
+
+    def configure(self, backend=None, framework=None, **kwargs):
+        """
+        Setup which backend will be used for reading and saving settings data
+        and which framework will be used for searching for available settings.
+        """
+        assert not self._configured, '``LazySettings`` instance already ' \
+                                     'configured. Backend: %r, framework: ' \
+                                     '%r' % (self._backend, self._framework)
+
+        if framework:
+            # Import framework module by the Python path
+            try:
+                framework_module = importlib.import_module(framework)
+            except ImportError:
+                message = 'Cannot import framework module from %r path' % \
+                          framework
+                logger.error(message)
+
+                raise ImproperlyConfigured(message)
+
+            # Load framework class from module if possible
+            try:
+                framework_klass = getattr(framework_module, 'Framework')
+            except AttributeError, e:
+                message = 'Cannot import framework class from %r module' % \
+                          framework
+                logger.error(message)
+
+                raise ImproperlyConfigured(message)
+
+            # Framework class should be an instance of ``SetmanFramework``
+            if not issubclass(framework_klass, SetmanFramework):
+                message = '%r is not a subclass of %r' % \
+                          (framework_klass, SetmanFramework)
+                logger.error(message)
+
+                raise ImproperlyConfigured(message)
+        else:
+            # If no framework would be set - we will use default class
+            framework_klass = SetmanFramework
+
+        if backend:
+            try:
+                backend_module = importlib.import_module(backend)
+            except ImportError, e:
+                message = 'Cannot import backend module from %r path' % backend
+                logger.error(message)
+
+                raise ImproperlyConfigured(message)
+
+            try:
+                backend_klass = getattr(backend_module, 'Backend')
+            except AttributeError, e:
+                message = 'Cannot import backend class from %r module' % \
+                          backend
+                logger.error(message)
+
+                raise ImproperlyConfigured(message)
+
+            if not issubclass(backend_klass, SetmanBackend):
+                message = '%r is not a subclass of %r' % \
+                          (backend_klass, SetmanBackend)
+                logger.error(message)
+
+                raise ImproperlyConfigured(message)
+        elif not framework_klass.default_backend:
+            message = '%r framework hasn\'t predefined backend. Please, ' \
+                      'configure it by yourself!' % framework_klass
+            logger.error(message)
+
+            raise ImproperlyConfigured(message)
+        else:
+            backend_klass = framework_klass.default_backend
+
+        self._framework = framework_klass(**kwargs)
+        self._settings = self._get_available_settings()
+
+        backend_kwargs = kwargs.copy()
+        backend_kwargs.update({'available_settings': self._settings,
+                               'framework': self._framework})
+
+        self._backend = backend_klass(**backend_kwargs)
+
+    def is_valid(self):
+        """
+        Check whether current settings are valid or not.
+        """
+        assert self._configured, '``LazySettings`` should be configured ' \
+                                 'before validating.'
+        return self._backend.is_valid()
+
     def revert(self):
         """
         Revert settings to default values.
         """
-        self._custom.revert()
+        assert self._configured, '``LazySettings`` should be configured ' \
+                                 'before reverting.'
+        self._backend.revert()
 
     def save(self):
         """
         Save customized settings to the database.
         """
-        self._custom.save()
-
-    def _clear(self):
-        """
-        Clear custom settings cache.
-        """
-        if hasattr(self, '_custom_cache'):
-            delattr(self, '_custom_cache')
+        assert self._configured, '``LazySettings`` should be configured ' \
+                                 'before saving.'
+        self._backend.save()
 
     @property
-    def _custom(self):
+    def _configured(self):
+        """
+        Return ``True`` if ``LazySettings`` instance is properly configured.
+        """
+        return bool(self._backend) and bool(self._framework)
+
+    def _get_available_settings(self):
+        """
+        Parse configuration definition files and read all available settings
+        from its.
+        """
+        assert self._framework, '``LazySettings`` should have ``_framework`` '\
+                                'attr before reading all available settings.'
+
         if self._parent:
-            return self._parent._custom
+            return self._parent.available_settings
 
-        if not hasattr(self, '_custom_cache'):
-            setattr(self, '_custom_cache', self._get_custom_settings())
+        if not hasattr(self, '_available_settings_cache'):
+            cache = parse_configs(self._framework)
+            setattr(self, '_available_settings_cache', cache)
 
-        return getattr(self, '_custom_cache')
-
-    def _get_custom_settings(self):
-        """
-        Do not read any settings before post_syncdb signal is called.
-        """
-        try:
-            return Settings.objects.get()
-        except Settings.DoesNotExist:
-            return Settings.objects.create(data={})
+        return getattr(self, '_available_settings_cache')
