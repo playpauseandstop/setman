@@ -1,5 +1,6 @@
 include LICENSE
 include MANIFEST.in
 include README.rst
-include setman/templates/setman/*
-include setman/templates/setman/admin/*
+include setman/frameworks/django_setman/templates/setman/*
+include setman/frameworks/django_setman/templates/setman/admin/*
+include setman/frameworks/flask_setman/templates/setman/*
