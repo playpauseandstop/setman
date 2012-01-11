@@ -71,5 +71,5 @@ See full documentation at ``docs/`` directory or browse online `here
 Bugs, feature requests?
 =======================
 
-If you found some bug in ``setman`` reusable app, please, add new issue to the
+If you found some bug in ``setman`` library, please, add new issue to the
 project's `GitHub issues <https://github.com/playpauseandstop/setman/issues>`_.
