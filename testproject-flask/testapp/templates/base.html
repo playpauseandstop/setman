@@ -27,6 +27,7 @@
         {% endfor %}</ul>{% endif %}
         {% endwith %}{% endblock %}
         {% block content %}{% endblock %}
+        {% block home_link %}<p>Back to <a href="{{ url_for("home") }}">home page</a>.</p>{% endblock %}
     </article>
 
     <footer>Igor Davydenko, 2012.</footer>

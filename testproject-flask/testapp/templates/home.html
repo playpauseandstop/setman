@@ -8,9 +8,11 @@
 
     <ul class="links">
         <li><a href="{{ url_for("setman.edit") }}">Edit test project settings</a></li>
+        <li><a href="{{ url_for("sandbox") }}">Sandbox</a></li>
         <li><a href="{{ url_for("view_settings") }}">View configuration definition and default values files</a></li>
         <li><a href="{{ url_for("docs") }}">View django-setman documentation</a></li>
         <li><a href="https://github.com/playpauseandstop/setman">View source code @ GitHub</a></li>
     </ul>
 
 {% endblock %}
+{% block home_link %}{% endblock %}

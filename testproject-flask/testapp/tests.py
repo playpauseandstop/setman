@@ -242,10 +242,34 @@ class TestTestapp(TestCase):
             response.data
         )
         self.assertIn(
+            '<a href="%s">Sandbox</a>' % self.url('sandbox'), response.data
+        )
+        self.assertIn(
             '<a href="%s">View configuration definition and default values ' \
             'files</a>' % self.url('view_settings'),
             response.data
         )
+
+    def test_sandbox(self):
+        url = self.url('sandbox')
+        response = self.app.get(url)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('Sandbox', response.data)
+        self.assertIn('Name:</label></dt>', response.data)
+        self.assertNotIn('<dt>Value:</dt>', response.data)
+
+        response = self.app.post(url, data={'name': 'DEBUG'})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('<dt>Value:</dt>', response.data)
+        self.assertIn('%s</dd>' % app.config['DEBUG'], response.data)
+
+        response = self.app.post(url, data={'name': 'IP_SETTING'})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('<dt>Value:</dt>', response.data)
+        self.assertIn(settings.IP_SETTING, response.data)
 
     def test_view_settings(self):
         response = self.app.get(self.url('view_settings'))
