@@ -13,5 +13,6 @@ urlpatterns = patterns('testapp.views',
     url(r'docs/$', 'docs', name='docs'),
     ('^docs/(?P<path>.*)$', login_required(serve),
      {'document_root': docs_dirname}, 'docs_browser'),
+    url(r'sandbox/$', 'sandbox', name='sandbox'),
     url(r'view-settings/$', 'view_settings', name='view_settings'),
 )

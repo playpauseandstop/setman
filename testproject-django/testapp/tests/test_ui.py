@@ -11,6 +11,7 @@ from setman import get_version, settings
 from setman.frameworks.django_setman.models import Settings
 from setman.utils.parsing import is_settings_container
 
+from testapp.forms import SandboxForm
 from testapp.tests.test_models import TEST_SETTINGS
 
 
@@ -70,6 +71,7 @@ class TestCase(DjangoTestCase):
         self.edit_settings_url = reverse('setman_edit')
         self.home_url = reverse('home')
         self.revert_settings_url = reverse('setman_revert')
+        self.sandbox_url = reverse('sandbox')
         self.view_settings_url = reverse('view_settings')
 
     def tearDown(self):
@@ -274,6 +276,10 @@ class TestUI(TestCase):
         )
         self.assertContains(
             response,
+            '<li><a href="%s">Sandbox</a></li>' % self.sandbox_url
+        )
+        self.assertContains(
+            response,
             '<li><a href="%s">View configuration definition and default ' \
             'values files</a></li>' % self.view_settings_url
         )
@@ -296,6 +302,38 @@ class TestUI(TestCase):
         self.assertIn(self.edit_settings_url, response['Location'])
 
         self.check_values(settings, TEST_SETTINGS)
+
+    def test_sandbox(self):
+        client = self.login(TEST_USERNAME)
+        response = client.get(self.sandbox_url)
+
+        self.assertContains(response, 'Sandbox', count=2)
+        self.assertContains(response, 'Name:</label></dt>')
+        self.assertNotContains(response, '<dt>Value:</dt>')
+
+        response = client.post(self.sandbox_url, data={'name': 'DEBUG'})
+
+        self.assertContains(response, '<dt>Value:</dt>')
+        self.assertContains(response, '%s' % django_settings.DEBUG)
+
+        response = client.post(self.sandbox_url, data={'name': 'IP_SETTING'})
+
+        self.assertContains(response, '<dt>Value:</dt>')
+        self.assertContains(response, settings.IP_SETTING)
+
+    def test_sandbox_errors(self):
+        client = self.login(TEST_USERNAME)
+
+        for name in SandboxForm.FORBIDDEN_SETTINGS:
+            response = client.post(self.sandbox_url, {'name': name})
+
+            self.assertContains(
+                response, 'The value for this setting is forbidden.'
+            )
+            self.assertNotContains(response, '<dt>Value:</dt>')
+            self.assertNotContains(
+                response, '%s' % getattr(django_settings, name)
+            )
 
     def test_view_settings(self):
         client = self.login(TEST_USERNAME)

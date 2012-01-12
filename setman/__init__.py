@@ -1,7 +1,7 @@
 from setman.lazy import LazySettings
 
 
-__all__ = ('VERSION', 'get_version', 'settings', 'setup')
+__all__ = ('VERSION', 'get_version', 'settings')
 
 
 VERSION = (0, 1, 'alpha')

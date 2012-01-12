@@ -12,10 +12,12 @@
     <ul class="links">
         <li><a href="{% url setman_edit %}">{{ _("Edit test project settings") }}</a></li>
         {% if user.is_staff %}<li><a href="{% url admin:django_setman_settings_changelist %}">{{ _("Edit test project settings via Django admin") }}</a></li>{% endif %}
+        <li><a href="{% url sandbox %}">{{ _("Sandbox") }}</a></li>
         <li><a href="{% url view_settings %}">{{ _("View configuration definition and default values files") }}</a></li>
-        <li><a href="{% url docs %}">{{ _("View django-setman documentation") }}</a></li>
+        <li><a href="{% url docs %}">{{ _("View setman documentation") }}</a></li>
         <li><a href="https://github.com/playpauseandstop/setman">{{ _("View source code @ GitHub") }}</a></li>
         <li><a href="{% url django.contrib.auth.views.logout %}">{{ _("Leave test project") }}</a></li>
     </ul>
 
 {% endblock %}
+{% block home_link %}{% endblock %}

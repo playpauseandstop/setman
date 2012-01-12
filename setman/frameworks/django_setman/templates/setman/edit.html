@@ -36,8 +36,6 @@
             <button><a href="{% url setman_revert %}" title="{{ _("Revert all settings to default values") }}">{{ _("Revert") }}</a></button>
         </p>
     </form>
-
-    <p>{% url home as home_url %}{% blocktrans %}Back to <a href="{{ home_url }}">home page</a>.{% endblocktrans %}</p>
     {% endif %}
 
 {% endblock %}

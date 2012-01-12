@@ -4,7 +4,7 @@ django_python = $(django_project)/ve/bin/python
 djake = VIRTUALENV=$(django_project)/ve djake
 DJANGO_RUNSERVER ?= runserver
 DJANGO_IP ?= 0.0.0.0
-DJNAGO_PORT ?= 4331
+DJANGO_PORT ?= 4331
 DJANGO_SHELL ?= shell_plus
 
 # Django test settings
@@ -30,7 +30,7 @@ django_bootstrap:
 	cd $(django_project) && python bootstrap.py
 
 django_server:
-	$(djake) $(DJANGO_RUNSERVER) $(IP):$(PORT)
+	$(djake) $(DJANGO_RUNSERVER) $(DJANGO_IP):$(DJANGO_PORT)
 
 django_shell:
 	$(djake) $(DJANGO_SHELL)

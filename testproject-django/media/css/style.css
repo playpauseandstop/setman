@@ -76,7 +76,7 @@ form .fields dd.field {
     margin-left: 16px;
 }
 
-form .fields dd.help {
+form .fields dd.help, p.help {
     color: #999;
     font-size: 0.9em;
 }
@@ -107,6 +107,15 @@ form p.buttons button {
 form p.buttons button a {
     color: #cae6e8;
     text-decoration: none;
+}
+
+hr {
+    background-color: #cae6e8;
+    border: 0;
+    font-size: 1px;
+    height: 1px;
+    line-height: 1px;
+    margin: 1em 0;
 }
 
 pre {

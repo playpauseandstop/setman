@@ -25,6 +25,9 @@
             <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
         {% endfor %}</ul>{% endif %}{% endblock %}
         {% block content %}{% endblock %}
+        {% block home_link %}<p>
+            {% url home as home_url %}{% blocktrans %}Back to <a href="{{ home_url }}">home page</a>.{% endblocktrans %}
+        </p>{% endblock %}
     </article>
 
     <footer>{{ _("Igor Davydenko, 2012.") }}</footer>

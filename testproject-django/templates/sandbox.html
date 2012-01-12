@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{{ _("Sandbox") }}{% endblock %}
+{% block extra_head %}
+    <script src="{{ MEDIA_URL }}js/jquery-1.6.4.min.js" type="text/javascript"></script>
+{% endblock %}
+{% block content_title %}{{ _("Sandbox") }}{% endblock %}
+
+{% block content %}
+
+    <form action="" method="post">
+        {% csrf_token %}
+
+        <dl class="fields">
+            <dt><label for="{{ form.name.auto_id }}">{{ form.name.label }}:</label></dt>
+            <dd class="field">{{ form.name }}</dd>
+            {% if form.name.errors %}<dd class="errors">{{ form.name.errors|join:" " }}</dd>{% endif %}
+            {% if form.name.help_text %}<dd class="help">{{ form.name.help_text }}</dd>{% endif %}
+
+            {% if has_value %}
+            <dt>{{ _("Value") }}:</dt>
+            <dd class="field">{% if not has_traceback %}
+                {{ value|pprint }}
+            {% else %}
+                <pre><code>{{ value }}</code></pre>
+            {% endif %}</dd>
+            {% endif %}
+        </dl>
+
+        <p class="buttons">
+            <button type="submit">{{ _("Submit") }}</button>
+        </p>
+    </form>
+
+    <script type="text/javascript"><!--
+        $("#id_name").focus();
+    --></script>
+
+    <p class="help">{% blocktrans %}
+        <em>Technical details:</em> Response is evaluation of <code>setman.helpers.get_config(name)</code>
+    {% endblocktrans %}</p>
+
+    <hr />
+
+    <h3>{{ _("Django settings names") }}</h3>
+    <p>{% for name in django_names %}
+        <a class="setting-name" href="#">{{ name }}</a>{% if not forloop.last %},{% endif %}
+    {% endfor %}</p>
+
+    <hr />
+
+    <h3>{{ _("setman settings names") }}</h3>
+    <p>{% for name in setman_names %}
+        <a class="setting-name" href="#">{{ name }}</a>{% if not loop.last %},{% endif %}
+    {% endfor %}</p>
+
+    <p class="help">{{ _("Click to one of possible config key or setting name to fill and submit form.") }}</p>
+
+    <script type="text/javascript"><!--
+        $("a.setting-name").click(function() {
+            var $this = $(this);
+            var form = $("form");
+            var input = $("#id_name");
+
+            input.val($this.text());
+            form.submit();
+
+            return false;
+        })
+    --></script>
+
+{% endblock %}
