@@ -1,7 +1,0 @@
-{% extends 'base.html' %}
-{% load i18n %}
-
-{% block content %}
-    {% url django_odesk.auth.views.authenticate as auth_url %}
-    {% blocktrans %}<p>Log in with oDesk account <a href="{{ auth_url }}?next={{ next }}">here</a>.</p>{% endblocktrans %}
-{% endblock %}
