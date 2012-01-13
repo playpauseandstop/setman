@@ -25,9 +25,9 @@ Then init database and setman migrations::
 And finally you can to get pair of oDesk keys and setup it to
 ``local_settings.py`` module. After, feel free to run development server::
 
-    $ python testproject-django/manage.py runserver <port>
+    $ make django_server
 
-and check how ``django-setman`` works.
+and check how ``setman`` Django test project works.
 
 Run tests
 ---------
@@ -35,7 +35,7 @@ Run tests
 For running tests, check that project already bootstrapped. If all ok, just
 run standard Django test command::
 
-    $ python testproject-django/manage.py test testapp
+    $ make django_test
 
 .. note:: We don't need to provide custom test settings module. All necessary
    options setup at ``testproject.settings`` and your ``local_settings``.
@@ -46,6 +46,31 @@ complete Jenkins tasks, execute::
     $ python testproject-django/manage.py jenkins
 
 and then check for data in ``reports/`` directory.
+
+Flask
+=====
+
+Initialization
+--------------
+
+Bootstrap testproject with::
+
+    $ cd testproject-flask
+    $ python bootstrap.py
+
+And right after you're ready to run Flask server with::
+
+    $ make flask_server
+
+and check how ``setman`` Flask test project works.
+
+Run tests
+---------
+
+For running tests, check that project already bootstrapped. If all ok, just
+run test with::
+
+    $ make flask_test
 
 No framework
 ============
@@ -73,3 +98,11 @@ Run tests
 For running tests, execute next command::
 
     $ make -C testproject-noframework test
+
+Running all available tests
+===========================
+
+After you bootstrapped all test project, you could to run all available tests
+with::
+
+    $ make test

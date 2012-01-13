@@ -2,8 +2,8 @@ import os
 import sys
 
 
-PROJECT_DIR = '/srv/django-setman'
-VIRTUALENV_DIR = 'testproject/ve'
+PROJECT_DIR = '/srv/setman'
+VIRTUALENV_DIR = 'testproject-django/ve'
 
 activate_this = \
     os.path.join(PROJECT_DIR, VIRTUALENV_DIR, 'bin', 'activate_this.py')
