@@ -35,6 +35,8 @@ class SetmanBackend(object):
         if hasattr(self, 'error'):
             raise ValueError('Cannot save invalid settings.')
 
+        logger.info('Initiate saving %s settings to %s backend',
+                    self.data, self.__class__.name)
         return super(SetmanBackend, self).__getattribute__(name)
 
     def clear(self):
@@ -52,8 +54,11 @@ class SetmanBackend(object):
         Read data from storage or return it from cache.
         """
         if not hasattr(self, self.data_cache_key):
+            logger.info('Reading data from backend')
             value = self._batch_method('to_python', self.read())
             setattr(self, self.data_cache_key, value)
+        else:
+            logger.info('Reading data from cache')
         return getattr(self, self.data_cache_key)
 
     @data.deleter
@@ -62,13 +67,17 @@ class SetmanBackend(object):
         Delete data attribute.
         """
         if hasattr(self, self.data_cache_key):
+            logger.info('Removing data from cache')
             delattr(self, self.data_cache_key)
+        else:
+            logger.info('Data is not at cache backend')
 
     @data.setter
     def data(self, value):
         """
         Alternate setup of data storage.
         """
+        logger.info('Setting up data to cache')
         value = self._batch_method('to_python', value)
         setattr(self, self.data_cache_key, value)
 
