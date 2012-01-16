@@ -33,6 +33,15 @@ header {
     text-shadow: 1px 1px 1px #2b2e2e;
 }
 
+header h1 a {
+    color: #fff !important;
+    cursor: pointer;
+}
+
+header h1 a:active, header h1 a:hover {
+    color: #cae6e8 !important;
+}
+
 article {
     margin: 20pt 40pt;
 }
