@@ -2,7 +2,7 @@ import os
 import sys
 
 
-PROJECT_DIR = '/srv/setman'
+PROJECT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 VIRTUALENV_DIR = 'testproject-django/ve'
 
 activate_this = \
