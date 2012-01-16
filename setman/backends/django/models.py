@@ -14,12 +14,12 @@ from setman.backends.django.managers import CACHE_KEY, SettingsManager
 __all__ = ('Settings', )
 
 
-class app_label_title(str):
+class app_label_title(unicode):
     """
     Simple fake for showing human readable values as app label in Django admin.
     """
     def __new__(cls, value, title):
-        instance = str.__new__(cls, value)
+        instance = unicode.__new__(cls, value)
         instance._title = title
         return instance
 
