@@ -35,8 +35,7 @@ class SetmanBackend(object):
         if hasattr(self, 'error'):
             raise ValueError('Cannot save invalid settings.')
 
-        logger.info('Initiate saving %s settings to %s backend',
-                    self.data, self.__class__.name)
+        logger.info('Initiate saving %s settings data to backend', self.data)
         return super(SetmanBackend, self).__getattribute__(name)
 
     def clear(self):
