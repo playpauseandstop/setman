@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load i18n %}
+{% block header_link %}{{ _("setman") }}{% endblock %}
 {% block content %}
 
     <p>{% blocktrans with user=user.get_full_name|default:user.username %}Hi, <strong>{{ user }}</strong>!{% endblocktrans %}</p>

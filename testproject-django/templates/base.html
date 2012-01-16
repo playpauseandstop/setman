@@ -13,7 +13,7 @@
 <body>
 
     <header>
-        <h1><a href="{% url home %}">{{ _("setman") }}</a></h1>
+        <h1>{% block header_link %}<a href="{% url home %}">{{ _("setman") }}</a>{% endblock %}</h1>
         <h2>{% block content_title %}{{ _("Test Project for Django Framework") }}{% endblock %}</h2>
         <a class="github-ribbon" href="https://github.com/playpauseandstop/setman">
             <img src="{{ MEDIA_URL }}images/github.png" alt="Fork me on GitHub">
