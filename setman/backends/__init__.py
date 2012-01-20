@@ -10,7 +10,8 @@ class SetmanBackend(object):
     How ``setman`` library will interact with the data storage.
     """
     available_settings = None
-    data_cache_key = '_setman_data_cache'
+    data_cache_key = 'setman_data_cache'
+    data_cache_time = None
     framework = None
 
     def __init__(self, **kwargs):
@@ -50,18 +51,19 @@ class SetmanBackend(object):
         """
         Read data from storage or return it from cache.
         """
-        if not hasattr(self.framework.local, self.data_cache_key):
+        if self.framework.cache.get(self.data_cache_key) is None:
             value = self._batch_method('to_python', self.read())
-            setattr(self.framework.local, self.data_cache_key, value)
-        return getattr(self.framework.local, self.data_cache_key)
+            args = (self.data_cache_time, ) if self.data_cache_time else ()
+            self.framework.cache.set(self.data_cache_key, value, *args)
+        return self.framework.cache.get(self.data_cache_key)
 
     @data.deleter
     def data(self):
         """
         Delete data attribute.
         """
-        if hasattr(self.framework.local, self.data_cache_key):
-            return getattr(self.framework.local, self.data_cache_key)
+        if self.framework.cache.get(self.data_cache_key) is None:
+            self.framework.cache.delete(self.data_cache_key)
 
     @data.setter
     def data(self, value):
@@ -69,7 +71,8 @@ class SetmanBackend(object):
         Alternate setup of data storage.
         """
         value = self._batch_method('to_python', value)
-        setattr(self.framework.local, self.data_cache_key, value)
+        args = (self.data_cache_time, ) if self.data_cache_time else ()
+        self.framework.cache.set(self.data_cache_key, value, *args)
 
     def is_valid(self, prefix=None):
         """

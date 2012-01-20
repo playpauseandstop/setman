@@ -9,6 +9,21 @@ from setman.utils.parsing import is_settings_container
 __all__ = ('SetmanFramework', )
 
 
+class SetmanCache(object):
+
+    def __init__(self):
+        self.data = {}
+
+    def delete(self, name):
+        del self.data[name]
+
+    def get(self, name):
+        return self.data.get(name)
+
+    def set(self, name, value, *args, **kwargs):
+        self.data[name] = value
+
+
 class SetmanFramework(object):
     """
     Base object for any framework that would be supported by ``setman`` app.
@@ -20,10 +35,10 @@ class SetmanFramework(object):
     Also, you could setup default backend for framework.
     """
     auth_permitted_func = None
+    cache = SetmanCache
     default_backend = None
     field_klasses = None
     field_name_separator = '.'
-    local = type('FakeLocal', (object, ), {})
     settings = type('SetmanSettings', (object, ), {})
     ValidationError = ValidationError
 
@@ -46,8 +61,8 @@ class SetmanFramework(object):
 
         self.__dict__.update(kwargs)
 
-        if callable(self.local):
-            self.local = self.local()
+        if callable(self.cache):
+            self.cache = self.cache()
 
     def build_form_fields(self, available_settings=None, fields=None):
         """

@@ -1,7 +1,7 @@
 import inspect
 import os
 
-from werkzeug.local import Local
+from werkzeug.contrib.cache import SimpleCache
 from wtforms import fields as wtf_fields, validators as wtf_validators
 
 from setman.frameworks import SetmanFramework
@@ -15,6 +15,7 @@ class Framework(SetmanFramework):
     """
     Add support of Flask framework using WTForms for editing fields in UI.
     """
+    cache = SimpleCache()
     field_klasses = {
         'boolean': wtf_fields.BooleanField,
         'choice': SelectField,
@@ -24,7 +25,6 @@ class Framework(SetmanFramework):
         'string': wtf_fields.TextField,
     }
     field_name_separator = '__'
-    local = Local
     ValidationError = wtf_validators.ValidationError
 
     def __init__(self, **kwargs):
