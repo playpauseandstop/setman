@@ -1,4 +1,5 @@
 import json
+import os
 import re
 
 try:
@@ -79,6 +80,27 @@ class Backend(SetmanBackend):
         raise ImproperlyConfigured('File format %r is not supported.' % \
                                    self.format)
 
+    @property
+    def ignore_cache(self):
+        if hasattr(self, 'disable_ignore_cache'):
+            return False
+
+        try:
+            mtime = os.path.getmtime(self.filename)
+        except (IOError, OSError):
+            mtime = None
+
+        if not mtime:
+            return False
+
+        old_mtime = getattr(self, '_mtime_cache', None)
+        setattr(self, '_mtime_cache', mtime)
+
+        if old_mtime and mtime != old_mtime:
+            return True
+
+        return False
+
     def read(self):
         if not self.filename:
             raise FilenameError
@@ -110,7 +132,9 @@ class Backend(SetmanBackend):
 
             raise e
 
+        setattr(self, 'disable_ignore_cache', True)
         content = self.from_python(self.data)
+        delattr(self, 'disable_ignore_cache')
 
         handler.write(content)
         handler.close()

@@ -35,7 +35,6 @@ class SetmanFramework(object):
     Also, you could setup default backend for framework.
     """
     auth_permitted_func = None
-    cache = SetmanCache
     default_backend = None
     field_klasses = None
     field_name_separator = '.'
@@ -60,9 +59,6 @@ class SetmanFramework(object):
             kwargs.pop('settings')
 
         self.__dict__.update(kwargs)
-
-        if callable(self.cache):
-            self.cache = self.cache()
 
     def build_form_fields(self, available_settings=None, fields=None):
         """

@@ -2,7 +2,6 @@ import os
 
 from django import forms as django_forms
 from django.conf import settings as django_settings
-from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.db.models.loading import get_apps
 
@@ -16,7 +15,6 @@ class Framework(SetmanFramework):
     Add support of Django framework for ``setman`` library.
     """
     auth_permitted_func = lambda request: request.user.is_superuser
-    cache = cache
     default_backend = DjangoBackend
     field_klasses = {
         'boolean': django_forms.BooleanField,
