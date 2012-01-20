@@ -1,3 +1,8 @@
+import os
+
+
+DIRNAME = os.path.normpath(os.path.dirname(__file__))
+
 # ==============
 # Debug settings
 # ==============
@@ -25,3 +30,8 @@ SECRET_KEY = ''
 #
 ODESK_PUBLIC_KEY = ''
 ODESK_PRIVATE_KEY = ''
+
+# ===============
+# setman settings
+# ===============
+SETMAN_DEFAULT_VALUES_FILE = os.path.join(DIRNAME, 'staging.cfg')
