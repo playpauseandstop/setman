@@ -331,9 +331,11 @@ class TestUI(TestCase):
                 response, 'The value for this setting is forbidden.'
             )
             self.assertNotContains(response, '<dt>Value:</dt>')
-            self.assertNotContains(
-                response, '%s' % getattr(django_settings, name)
-            )
+
+            if not getattr(django_settings, name):
+                self.assertNotContains(
+                    response, '%s' % getattr(django_settings, name)
+                )
 
     def test_view_settings(self):
         client = self.login(TEST_USERNAME)
