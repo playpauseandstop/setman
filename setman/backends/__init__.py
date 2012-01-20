@@ -10,7 +10,7 @@ class SetmanBackend(object):
     How ``setman`` library will interact with the data storage.
     """
     available_settings = None
-    data_cache_key = '_data_cache'
+    data_cache_key = '_setman_data_cache'
     framework = None
 
     def __init__(self, **kwargs):
@@ -50,18 +50,18 @@ class SetmanBackend(object):
         """
         Read data from storage or return it from cache.
         """
-        if not hasattr(self, self.data_cache_key):
+        if not hasattr(self.framework.local, self.data_cache_key):
             value = self._batch_method('to_python', self.read())
-            setattr(self, self.data_cache_key, value)
-        return getattr(self, self.data_cache_key)
+            setattr(self.framework.local, self.data_cache_key, value)
+        return getattr(self.framework.local, self.data_cache_key)
 
     @data.deleter
     def data(self):
         """
         Delete data attribute.
         """
-        if hasattr(self, self.data_cache_key):
-            delattr(self, self.data_cache_key)
+        if hasattr(self.framework.local, self.data_cache_key):
+            return getattr(self.framework.local, self.data_cache_key)
 
     @data.setter
     def data(self, value):
@@ -69,7 +69,7 @@ class SetmanBackend(object):
         Alternate setup of data storage.
         """
         value = self._batch_method('to_python', value)
-        setattr(self, self.data_cache_key, value)
+        setattr(self.framework.local, self.data_cache_key, value)
 
     def is_valid(self, prefix=None):
         """

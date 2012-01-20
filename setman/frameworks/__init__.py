@@ -23,6 +23,7 @@ class SetmanFramework(object):
     default_backend = None
     field_klasses = None
     field_name_separator = '.'
+    local = type('FakeLocal', (object, ), {})
     settings = type('SetmanSettings', (object, ), {})
     ValidationError = ValidationError
 
@@ -44,6 +45,9 @@ class SetmanFramework(object):
             kwargs.pop('settings')
 
         self.__dict__.update(kwargs)
+
+        if callable(self.local):
+            self.local = self.local()
 
     def build_form_fields(self, available_settings=None, fields=None):
         """

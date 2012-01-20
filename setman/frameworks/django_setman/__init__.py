@@ -4,6 +4,7 @@ from django import forms as django_forms
 from django.conf import settings as django_settings
 from django.core.exceptions import ValidationError
 from django.db.models.loading import get_apps
+from django.utils._threading_local import local
 
 from setman.backends.django import Backend as DjangoBackend
 from setman.frameworks import SetmanFramework
@@ -24,6 +25,7 @@ class Framework(SetmanFramework):
         'int': django_forms.IntegerField,
         'string': django_forms.CharField,
     }
+    local = local
     settings = django_settings
     ValidationError = ValidationError
 

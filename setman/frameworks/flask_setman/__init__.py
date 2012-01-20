@@ -1,6 +1,7 @@
 import inspect
 import os
 
+from werkzeug.local import Local
 from wtforms import fields as wtf_fields, validators as wtf_validators
 
 from setman.frameworks import SetmanFramework
@@ -23,6 +24,7 @@ class Framework(SetmanFramework):
         'string': wtf_fields.TextField,
     }
     field_name_separator = '__'
+    local = Local
     ValidationError = wtf_validators.ValidationError
 
     def __init__(self, **kwargs):
