@@ -332,7 +332,7 @@ class TestUI(TestCase):
             )
             self.assertNotContains(response, '<dt>Value:</dt>')
 
-            if not getattr(django_settings, name):
+            if getattr(django_settings, name):
                 self.assertNotContains(
                     response, '%s' % getattr(django_settings, name)
                 )
