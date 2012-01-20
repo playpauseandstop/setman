@@ -1,3 +1,5 @@
+import copy
+
 from setman.backends import SetmanBackend
 from setman.exceptions import ImproperlyConfigured, SettingDoesNotExist
 from setman.frameworks import SetmanFramework
@@ -63,7 +65,7 @@ class LazySettings(object):
         if not self._configured:
             self.autoconf()
 
-        data, prefix = self._backend.data, self._prefix
+        data, prefix = copy.deepcopy(self._backend.data), self._prefix
         framework_settings = self._framework.settings
 
         # Read app setting from database
@@ -97,22 +99,22 @@ class LazySettings(object):
         if not self._configured:
             self.autoconf()
 
+        data, prefix = copy.deepcopy(self._backend.data), self._prefix
         framework_settings = self._framework.settings
 
         # First of all try to setup value to framework setting
         if hasattr(framework_settings, name):
             setattr(framework_settings, name, value)
         # Then setup value to project setting
-        elif not self._prefix:
-            self._backend.data[name] = value
+        elif not prefix:
+            data[name] = value
         # And finally setup value to app setting
         else:
-            data, prefix = self._backend.data, self._prefix
-
             if not prefix in data:
                 data[prefix] = {}
+            data[prefix][name] = value
 
-            data[prefix].update({name: value})
+        self._backend.data = data
 
     def autoconf(self):
         """

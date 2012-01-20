@@ -1,5 +1,4 @@
 from setman.exceptions import ValidationError
-from setman.utils import logger
 from setman.utils.parsing import is_settings_container
 
 
@@ -51,8 +50,7 @@ class SetmanBackend(object):
         """
         Read data from storage or return it from cache.
         """
-        if not hasattr(self, self.data_cache_key) or \
-           getattr(self, self.data_cache_key) is None:
+        if not hasattr(self, self.data_cache_key):
             value = self._batch_method('to_python', self.read())
             setattr(self, self.data_cache_key, value)
         return getattr(self, self.data_cache_key)
@@ -63,7 +61,6 @@ class SetmanBackend(object):
         Delete data attribute.
         """
         if hasattr(self, self.data_cache_key):
-            setattr(self, self.data_cache_key, None)
             delattr(self, self.data_cache_key)
 
     @data.setter
