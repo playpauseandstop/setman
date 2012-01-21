@@ -218,6 +218,15 @@ class LazySettings(object):
 
         self._backend = backend_klass(**backend_kwargs)
 
+    @property
+    def error(self):
+        """
+        Return last validation error if any.
+        """
+        assert self._configured, '``LazySettings`` should be configured ' \
+                                 'before validating.'
+        return self._backend.error
+
     def is_valid(self):
         """
         Check whether current settings are valid or not.

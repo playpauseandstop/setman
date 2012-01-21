@@ -17,7 +17,7 @@ DEFAULT_FORMAT = 'json'
 DIRNAME = os.path.dirname(__file__)
 rel = lambda *parts: os.path.abspath(os.path.join(DIRNAME, *parts))
 
-SETTINGS_DATA_FILE = rel('settings.%(format)s')
+SETTINGS_DATA_FILE = rel('..', 'settings.%(format)s')
 SETTINGS_FILE = rel('settings.cfg')
 SETTINGS_FILES = {'testapp': rel('testapp.cfg')}
 
@@ -57,8 +57,11 @@ def main(available_settings=None):
             setattr(values, setting.name, new_value)
 
     if not available_settings.app_name:
-        settings.save()
-        print('\nSettings were saved! Exit...')
+        if settings.is_valid():
+            settings.save()
+            print('\nSettings were saved! Exit...')
+        else:
+            print('\nCannot save settings, error:\n%s' % settings.error)
 
 
 if __name__ == '__main__':
